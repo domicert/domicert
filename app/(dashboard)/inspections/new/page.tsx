@@ -329,6 +329,34 @@ const drivewayLabel = {
   }
 
   const [sections, setSections] = useState<Section[]>([])
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [webLink, setWebLink] = useState<string | null>(null)
+const handleSubmit = async () => {
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const response = await fetch('/api/inspections/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property,
+          config,
+          sections,
+          selectedTier,
+        }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Submission failed')
+      setWebLink(result.webLink)
+      setSubmitted(true)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const updateProp = (f: string, v: string) => {
     setError(null)
@@ -821,8 +849,56 @@ const drivewayLabel = {
           </div>
         )}
 
+        {/* SUCCESS SCREEN */}
+        {submitted && (
+          <div className="max-w-lg mx-auto text-center py-12">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-[#1D9E75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-medium text-gray-900 mb-2">Report sent!</h2>
+            <p className="text-gray-500 mb-2">
+              The full PDF report has been emailed to <strong>{property.clientEmail}</strong>
+            </p>
+            <p className="text-gray-500 mb-8 text-sm">
+              This inspection is now stored in the Domicert database.
+            </p>
+            {webLink && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <p className="text-xs text-gray-500 mb-1">Client web link (valid 2 years):</p>
+                <p className="text-xs text-[#1D9E75] break-all">{webLink}</p>
+              </div>
+            )}
+            <div className="flex gap-3 justify-center">
+              <Link
+                href="/dashboard"
+                className="px-6 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
+              >
+                Back to dashboard
+              </Link>
+              <button
+                onClick={() => {
+                  setSubmitted(false)
+                  setStep(1)
+                  setProperty({
+                    address: '', city: '', provinceState: 'ON', postalZip: '',
+                    country: 'CA', yearBuilt: '', propertyType: 'single_family',
+                    clientName: '', clientEmail: '', clientPhone: '',
+                    inspectionFee: '', inspectionDate: '',
+                  })
+                  setSections([])
+                }}
+                className="px-6 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                New inspection
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* STEP 4 — Review & submit */}
-        {step === 4 && (
+        {step === 4 && !submitted && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="font-medium text-gray-900 mb-4">Inspection summary</h2>
@@ -893,17 +969,22 @@ const drivewayLabel = {
                 The client will receive a branded PDF report and a secure link to view it online for 2 years.
               </div>
             </div>
-
+{submitError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                {submitError}
+              </div>
+            )}
             <div className="flex gap-3">
               <button onClick={() => setStep(3)}
                 className="px-6 py-3 border border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-50">
                 ← Back
               </button>
               <button
-                onClick={() => alert('Report submission coming soon — PDF generation is next!')}
-                className="flex-1 py-3 bg-[#1D9E75] text-white rounded-lg font-medium hover:bg-[#0F6E56] transition-colors">
-                Submit & email report →
-              </button>
+  onClick={handleSubmit}
+  disabled={submitting}
+  className="flex-1 py-3 bg-[#1D9E75] text-white rounded-lg font-medium hover:bg-[#0F6E56] transition-colors disabled:opacity-50">
+  {submitting ? 'Generating report...' : 'Submit & email report →'}
+</button>
             </div>
           </div>
         )}
