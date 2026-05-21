@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg">
+  <title>Domicert mark</title>
+  <!-- House mark -->
+  <polygon points="34,2 68,28 60,28 60,72 8,72 8,28 0,28" fill="#1D9E75"/>
+  <polygon points="34,8 60,27 52,27 52,70 16,70 16,27 8,27" fill="rgba(0,0,0,0.07)"/>
+  <!-- Shield inside house -->
+  <path d="M20 42 Q20 33 34 30 Q48 33 48 42 L48 58 Q42 64 34 66 Q26 64 20 58 Z" fill="white" opacity="0.93"/>
+  <!-- Checkmark inside shield -->
+  <polyline points="26,48 31,54 42,40" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Magnifying glass -->
+  <circle cx="57" cy="34" r="13" fill="white" stroke="#0F6E56" stroke-width="2.5"/>
+  <circle cx="57" cy="34" r="8" fill="none" stroke="#0F6E56" stroke-width="2"/>
+  <line x1="63" y1="41" x2="71" y2="50" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+</svg>
