@@ -5,19 +5,122 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+interface Inspection {
+  id: string
+  client_name: string
+  client_email: string
+  inspection_date: string
+  status: string
+  tier: string
+  submitted_at: string
+  properties: {
+    address_line1: string
+    city: string
+    province_state: string
+  }
+  reports: {
+    id: string
+    web_token: string
+    haz_count: number
+    def_count: number
+    mon_count: number
+    ok_count: number
+  } | null
+}
+
+interface Company {
+  name: string
+  inspection_count: number
+}
+
 export default function DashboardPage() {
-  const [user, setUser] = useState<{email?: string | null, user_metadata?: {first_name?: string, company_name?: string}} | null>(null)
+  const [user, setUser] = useState<{email?: string | null, user_metadata?: {first_name?: string}} | null>(null)
+  const [company, setCompany] = useState<Company | null>(null)
+  const [inspections, setInspections] = useState<Inspection[]>([])
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    total: 0,
+    thisMonth: 0,
+    revenue: 0,
+    purchased: 0,
+  })
 
   const supabase = createClient()
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
+    const loadDashboard = async () => {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+        if (!user) return
+
+        // Get company
+        const { data: memberData } = await supabase
+          .from('company_members')
+          .select('company_id, companies(name, inspection_count)')
+          .eq('user_id', user.id)
+          .single()
+
+        if (memberData?.companies) {
+          setCompany(memberData.companies as unknown as Company)
+        }
+
+        // Get inspections with property and report data
+        const { data: inspectionData } = await supabase
+          .from('inspections')
+          .select(`
+            id,
+            client_name,
+            client_email,
+            inspection_date,
+            status,
+            tier,
+            submitted_at,
+            properties (
+              address_line1,
+              city,
+              province_state
+            ),
+            reports (
+              id,
+              web_token,
+              haz_count,
+              def_count,
+              mon_count,
+              ok_count
+            )
+          `)
+          .eq('inspector_user_id', user.id)
+          .order('submitted_at', { ascending: false })
+          .limit(10)
+
+        if (inspectionData) {
+          setInspections(inspectionData as unknown as Inspection[])
+
+          // Calculate stats
+          const now = new Date()
+          const thisMonth = inspectionData.filter(i => {
+            const date = new Date(i.submitted_at)
+            return date.getMonth() === now.getMonth() &&
+              date.getFullYear() === now.getFullYear()
+          }).length
+
+          setStats({
+            total: inspectionData.length,
+            thisMonth,
+            revenue: 0,
+            purchased: 0,
+          })
+        }
+      } catch (err) {
+        console.error('Dashboard error:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    getUser()
+
+    loadDashboard()
   }, [])
 
   const handleSignOut = async () => {
@@ -34,7 +137,14 @@ export default function DashboardPage() {
   }
 
   const firstName = user?.user_metadata?.first_name || 'there'
-  const companyName = user?.user_metadata?.company_name || 'Your Company'
+  const companyName = company?.name || 'Your Company'
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -49,10 +159,7 @@ export default function DashboardPage() {
             <Link href="/dashboard" className="text-sm text-[#1D9E75] font-medium">Dashboard</Link>
             <Link href="/inspections/new" className="text-sm text-gray-500 hover:text-gray-900">New inspection</Link>
             <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-900">Profile</Link>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-gray-400 hover:text-gray-600"
-            >
+            <button onClick={handleSignOut} className="text-sm text-gray-400 hover:text-gray-600">
               Sign out
             </button>
           </div>
@@ -64,7 +171,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-medium text-gray-900">
-              Good morning, {firstName}
+              {getGreeting()}, {firstName}
             </h1>
             <p className="text-sm text-gray-500 mt-1">{companyName}</p>
           </div>
@@ -78,17 +185,22 @@ export default function DashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Total inspections', value: '0', color: 'text-gray-900' },
-            { label: 'This month', value: '0', color: 'text-gray-900' },
-            { label: 'Report revenue', value: '$0', color: 'text-[#1D9E75]' },
-            { label: 'Reports purchased', value: '0', color: 'text-gray-900' },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-5 text-center">
-              <div className={`text-3xl font-medium mb-1 ${stat.color}`}>{stat.value}</div>
-              <div className="text-xs text-gray-500">{stat.label}</div>
-            </div>
-          ))}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
+            <div className="text-3xl font-medium text-gray-900 mb-1">{stats.total}</div>
+            <div className="text-xs text-gray-500">total inspections</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
+            <div className="text-3xl font-medium text-gray-900 mb-1">{stats.thisMonth}</div>
+            <div className="text-xs text-gray-500">this month</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
+            <div className="text-3xl font-medium text-[#1D9E75] mb-1">${stats.revenue}</div>
+            <div className="text-xs text-gray-500">report revenue</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 text-center">
+            <div className="text-3xl font-medium text-gray-900 mb-1">{stats.purchased}</div>
+            <div className="text-xs text-gray-500">reports purchased</div>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">
@@ -100,19 +212,82 @@ export default function DashboardPage() {
                 + New
               </Link>
             </div>
-            <div className="text-center py-12">
-              <div className="text-4xl mb-3">🏠</div>
-              <div className="text-sm font-medium text-gray-700 mb-1">No inspections yet</div>
-              <div className="text-xs text-gray-400 mb-4">
-                Start your first inspection to see it here
+
+            {inspections.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">🏠</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">No inspections yet</div>
+                <div className="text-xs text-gray-400 mb-4">
+                  Start your first inspection to see it here
+                </div>
+                <Link
+                  href="/inspections/new"
+                  className="px-4 py-2 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
+                >
+                  Start first inspection →
+                </Link>
               </div>
-              <Link
-                href="/inspections/new"
-                className="px-4 py-2 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
-              >
-                Start first inspection →
-              </Link>
-            </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {inspections.map(inspection => (
+                  <div key={inspection.id} className="py-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        {inspection.properties?.address_line1}, {inspection.properties?.city}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-2">
+                        <span>{inspection.client_name}</span>
+                        <span>·</span>
+                        <span>{new Date(inspection.inspection_date).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        <span>·</span>
+                        <span className="capitalize">{inspection.tier}</span>
+                      </div>
+                      {inspection.reports && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {inspection.reports.haz_count > 0 && (
+                            <span className="px-1.5 py-0.5 bg-gray-900 text-white text-xs rounded">
+                              {inspection.reports.haz_count} HAZ
+                            </span>
+                          )}
+                          {inspection.reports.def_count > 0 && (
+                            <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded">
+                              {inspection.reports.def_count} DEF
+                            </span>
+                          )}
+                          {inspection.reports.mon_count > 0 && (
+                            <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded">
+                              {inspection.reports.mon_count} MON
+                            </span>
+                          )}
+                          {inspection.reports.haz_count === 0 && inspection.reports.def_count === 0 && (
+                            <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded">
+                              ✓ Clean
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        inspection.status === 'submitted'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {inspection.status}
+                      </span>
+                      {inspection.reports?.web_token && (
+                        <Link
+                          href={`/report/${inspection.reports.web_token}`}
+                          className="px-3 py-1 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"
+                        >
+                          view
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right column */}
@@ -149,7 +324,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="font-medium text-gray-900 mb-2">Marketplace</h2>
               <p className="text-xs text-gray-400 mb-4">
-                Historical report purchases appear here once you have inspections on file
+                Historical report purchases appear here once available
               </p>
               <div className="text-center py-4">
                 <div className="text-2xl mb-2">📊</div>
@@ -157,7 +332,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Tier status */}
+            {/* Plan status */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="font-medium text-gray-900 mb-1">Your plan</h2>
               <div className="flex items-center gap-2 mb-3">
@@ -166,7 +341,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-gray-400">
-                Submit inspections free during your trial period. Choose a tier when starting each inspection.
+                Submit inspections free during your trial period.
               </p>
             </div>
           </div>
