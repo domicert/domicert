@@ -177,7 +177,13 @@ export async function POST(request: NextRequest) {
         city: property.city,
         provinceState: property.provinceState,
         postalZip: property.postalZip,
-        propertyType: property.propertyType,
+        propertyType: {
+        single_family: 'Single-family home',
+        semi: 'Semi-detached',
+        townhouse: 'Townhouse',
+        condo: 'Condo',
+        multi: 'Multi-unit',
+      }[property.propertyType as string] || property.propertyType,
         yearBuilt: property.yearBuilt,
         floors: config.floors,
         bedrooms: config.bedrooms,
@@ -231,7 +237,23 @@ export async function POST(request: NextRequest) {
       .update({ pdf_storage_path: pdfPath })
       .eq('id', report?.id)
 
-    // 9. Send email via Resend
+    // 9. Create survey record
+    const { data: surveyRecord } = await supabase
+      .from('surveys')
+      .insert({
+        inspection_id: inspection.id,
+        homeowner_user_id: homeownerUserId,
+        sent_at: new Date().toISOString(),
+        token_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select()
+      .single()
+
+    const surveyLink = surveyRecord
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/survey/${surveyRecord.token}`
+      : null
+
+    // 10. Send email via Resend
     const webLink = `${process.env.NEXT_PUBLIC_APP_URL}/report/${webToken}`
     const propertyAddress = `${property.address}, ${property.city}`
 
@@ -251,31 +273,29 @@ export async function POST(request: NextRequest) {
 
           <div style="background: #F9FAFB; border-radius: 8px; padding: 16px; margin: 20px 0;">
             <h3 style="margin: 0 0 12px; color: #111827; font-size: 14px;">Summary of findings</h3>
-            <div style="display: flex; gap: 12px;">
-              <div style="text-align: center; flex: 1;">
-                <div style="font-size: 24px; font-weight: bold; color: #1F2937;">${counts.haz}</div>
-                <div style="font-size: 11px; color: #6B7280;">Safety hazards</div>
-              </div>
-              <div style="text-align: center; flex: 1;">
-                <div style="font-size: 24px; font-weight: bold; color: #DC2626;">${counts.def}</div>
-                <div style="font-size: 11px; color: #6B7280;">Defects</div>
-              </div>
-              <div style="text-align: center; flex: 1;">
-                <div style="font-size: 24px; font-weight: bold; color: #D97706;">${counts.mon}</div>
-                <div style="font-size: 11px; color: #6B7280;">Monitor</div>
-              </div>
-              <div style="text-align: center; flex: 1;">
-                <div style="font-size: 24px; font-weight: bold; color: #1D9E75;">${counts.ok}</div>
-                <div style="font-size: 11px; color: #6B7280;">Acceptable</div>
-              </div>
+            <div style="display: flex; gap: 12px; text-align: center;">
+              <div style="flex: 1;"><div style="font-size: 24px; font-weight: bold; color: #1F2937;">${counts.haz}</div><div style="font-size: 11px; color: #6B7280;">Safety hazards</div></div>
+              <div style="flex: 1;"><div style="font-size: 24px; font-weight: bold; color: #DC2626;">${counts.def}</div><div style="font-size: 11px; color: #6B7280;">Defects</div></div>
+              <div style="flex: 1;"><div style="font-size: 24px; font-weight: bold; color: #D97706;">${counts.mon}</div><div style="font-size: 11px; color: #6B7280;">Monitor</div></div>
+              <div style="flex: 1;"><div style="font-size: 24px; font-weight: bold; color: #1D9E75;">${counts.ok}</div><div style="font-size: 11px; color: #6B7280;">Acceptable</div></div>
             </div>
           </div>
 
-          <p style="color: #374151;">Your full report is attached to this email as a PDF. You can also view it online for the next 2 years:</p>
+          <p style="color: #374151;">Your full report is attached as a PDF. You can also view it online for 2 years:</p>
 
           <a href="${webLink}" style="display: inline-block; background: #1D9E75; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; margin: 8px 0;">
             View report online →
           </a>
+
+          ${surveyLink ? `
+          <div style="margin-top: 32px; padding: 20px; background: #F9FAFB; border-radius: 8px; border-left: 3px solid #1D9E75;">
+            <h3 style="margin: 0 0 8px; color: #111827; font-size: 14px;">How was your experience?</h3>
+            <p style="margin: 0 0 12px; color: #6B7280; font-size: 13px;">4 quick questions — takes 60 seconds. Your feedback helps us improve.</p>
+            <a href="${surveyLink}" style="display: inline-block; background: white; color: #1D9E75; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px; border: 1px solid #1D9E75;">
+              Share your feedback →
+            </a>
+          </div>
+          ` : ''}
 
           <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 24px 0;">
           <p style="color: #9CA3AF; font-size: 12px;">
