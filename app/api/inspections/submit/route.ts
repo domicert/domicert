@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       .eq('id', report?.id)
 
     // 9. Create survey record
-    const { data: surveyRecord } = await supabase
+    const { data: surveyRecord, error: surveyError } = await supabase
       .from('surveys')
       .insert({
         inspection_id: inspection.id,
@@ -248,6 +248,8 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+
+    if (surveyError) console.error('Survey insert error:', surveyError)
 
     const surveyLink = surveyRecord
       ? `${process.env.NEXT_PUBLIC_APP_URL}/survey/${surveyRecord.token}`

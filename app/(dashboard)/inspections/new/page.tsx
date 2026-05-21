@@ -333,6 +333,7 @@ const drivewayLabel = {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [webLink, setWebLink] = useState<string | null>(null)
+  const [emailConfirmed, setEmailConfirmed] = useState(false)
 const handleSubmit = async () => {
     setSubmitting(true)
     setSubmitError(null)
@@ -987,13 +988,13 @@ const handleSubmit = async () => {
               </div>
             )}
             <div className="flex gap-3">
-              <button onClick={() => setStep(3)}
+              <button onClick={() => { setStep(3); setEmailConfirmed(false) }}
                 className="px-6 py-3 border border-gray-200 text-gray-600 rounded-lg font-medium hover:bg-gray-50">
                 ← Back
               </button>
               <button
   onClick={handleSubmit}
-  disabled={submitting}
+  disabled={submitting || !emailConfirmed}
   className="flex-1 py-3 bg-[#1D9E75] text-white rounded-lg font-medium hover:bg-[#0F6E56] transition-colors disabled:opacity-50">
   {submitting ? 'Generating report...' : 'Submit & email report →'}
 </button>
