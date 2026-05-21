@@ -966,8 +966,20 @@ const handleSubmit = async () => {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400 resize-none" />
               </div>
               <div className="bg-gray-50 rounded-lg p-4 mb-4 text-xs text-gray-500">
-                The client will receive a branded PDF report and a secure link to view it online for 2 years.
-              </div>
+  The client will receive a branded PDF report and a secure link to view it online for 2 years.
+</div>
+<label className="flex items-start gap-3 p-3 border-2 border-yellow-200 bg-yellow-50 rounded-lg cursor-pointer">
+  <input
+    type="checkbox"
+    checked={emailConfirmed}
+    onChange={e => setEmailConfirmed(e.target.checked)}
+    className="w-4 h-4 accent-[#1D9E75] mt-0.5 flex-shrink-0"
+  />
+  <span className="text-sm text-yellow-800">
+    I confirm <strong>{property.clientEmail}</strong> is the correct email address for this client. 
+    The report will be sent here and cannot be automatically recalled.
+  </span>
+</label>
             </div>
 {submitError && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">

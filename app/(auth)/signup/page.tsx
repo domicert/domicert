@@ -59,6 +59,7 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
     try {
+      // 1. Create auth user
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -72,9 +73,61 @@ export default function SignupPage() {
         }
       })
       if (signUpError) throw signUpError
-      if (data) {
-        window.location.href = '/dashboard'
+      if (!data.user) throw new Error('No user returned from signup')
+
+      // 2. Create company record
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .insert({
+          owner_user_id: data.user.id,
+          name: formData.companyName,
+          email: formData.companyEmail || formData.email,
+          phone: formData.companyPhone,
+          license_number: formData.licenseNumber,
+          website_url: formData.website,
+          address_line1: formData.addressLine1,
+          city: formData.city,
+          province_state: formData.provinceState,
+          postal_zip: formData.postalZip,
+          country: formData.country,
+          accent_color: formData.accentColor,
+          default_disclaimer: formData.disclaimer,
+          is_auto_created: false,
+          is_solo_operator: !formData.hasteam,
+          profile_public: true,
+          inspection_count: 0,
+        })
+        .select()
+        .single()
+
+      if (companyError) throw new Error(`Company error: ${companyError.message}`)
+
+      // 3. Create company member record linking user to company
+      const { error: memberError } = await supabase
+        .from('company_members')
+        .insert({
+          company_id: company.id,
+          user_id: data.user.id,
+          role: 'owner',
+          invite_accepted_at: new Date().toISOString(),
+          is_active: true,
+        })
+
+      if (memberError) throw new Error(`Member error: ${memberError.message}`)
+
+      // 4. Send team invites if needed
+      if (formData.hasteam && formData.teamEmails) {
+        const emails = formData.teamEmails
+          .split('\n')
+          .map((e: string) => e.trim())
+          .filter((e: string) => e.includes('@'))
+        
+        // Store invite tokens for each email — we'll build the invite flow later
+        console.log('Team invites to send:', emails)
       }
+
+      window.location.href = '/dashboard'
+
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message)
