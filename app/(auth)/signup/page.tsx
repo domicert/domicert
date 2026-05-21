@@ -1,0 +1,546 @@
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+
+type AccountType = 'inspector' | 'realtor' | null
+
+export default function SignupPage() {
+  const [step, setStep] = useState(1)
+  const [accountType, setAccountType] = useState<AccountType>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [formData, setFormData] = useState({
+    // Step 1
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    phone: '',
+    // Step 2
+    companyName: '',
+    companyEmail: '',
+    companyPhone: '',
+    licenseNumber: '',
+    addressLine1: '',
+    city: '',
+    provinceState: '',
+    postalZip: '',
+    country: 'CA',
+    website: '',
+    // Step 3
+    accentColor: '#1D9E75',
+    disclaimer: 'This report was prepared by a certified home inspector and reflects conditions observed at the time of inspection only. It does not constitute a warranty or guarantee.',
+    // Step 4
+    hasteam: false,
+    teamEmails: '',
+  })
+
+  const update = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    // Auto-fill company name from first/last name
+    if (field === 'firstName' || field === 'lastName') {
+      const first = field === 'firstName' ? value : formData.firstName
+      const last = field === 'lastName' ? value : formData.lastName
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+        companyName: `${first} ${last} Inspections`.trim()
+      }))
+    }
+  }
+
+  const supabase = createClient()
+
+  const handleSubmit = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            role: accountType,
+            company_name: formData.companyName,
+          }
+        }
+      })
+      if (signUpError) throw signUpError
+      if (data) {
+        window.location.href = '/dashboard'
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50">
+      {/* Nav */}
+      <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-100">
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/brand/domicert-mark.svg" alt="Domicert" width={32} height={32} />
+          <span className="font-medium text-gray-900">Domicert</span>
+        </Link>
+        <p className="text-sm text-gray-500">
+          Already have an account?{' '}
+          <Link href="/login" className="text-[#1D9E75] hover:underline">Log in</Link>
+        </p>
+      </nav>
+
+      <div className="max-w-lg mx-auto px-4 py-12">
+
+        {/* Step indicator */}
+        <div className="flex items-center justify-center mb-8">
+          {[1, 2, 3, 4].map((s) => (
+            <div key={s} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                s < step ? 'bg-[#1D9E75] text-white' :
+                s === step ? 'bg-[#1D9E75] text-white' :
+                'bg-gray-200 text-gray-500'
+              }`}>
+                {s < step ? '✓' : s}
+              </div>
+              {s < 4 && (
+                <div className={`w-12 h-0.5 transition-colors ${
+                  s < step ? 'bg-[#1D9E75]' : 'bg-gray-200'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Step labels */}
+        <div className="flex justify-between text-xs text-gray-400 mb-8 px-1">
+          <span className={step >= 1 ? 'text-[#1D9E75]' : ''}>Account</span>
+          <span className={step >= 2 ? 'text-[#1D9E75]' : ''}>Company</span>
+          <span className={step >= 3 ? 'text-[#1D9E75]' : ''}>Branding</span>
+          <span className={step >= 4 ? 'text-[#1D9E75]' : ''}>Team</span>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* STEP 1 — Account basics */}
+        {step === 1 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h1 className="text-xl font-medium text-gray-900 mb-1">Create your account</h1>
+            <p className="text-sm text-gray-500 mb-6">Choose your account type to get started</p>
+
+            {/* Account type selector */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button
+                onClick={() => setAccountType('inspector')}
+                className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                  accountType === 'inspector'
+                    ? 'border-[#1D9E75] bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">🏠</div>
+                <div className="font-medium text-gray-900 text-sm">Inspector</div>
+                <div className="text-xs text-gray-500 mt-1">Run inspections, generate reports</div>
+              </button>
+              <button
+                onClick={() => setAccountType('realtor')}
+                className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                  accountType === 'realtor'
+                    ? 'border-[#1D9E75] bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">🔑</div>
+                <div className="font-medium text-gray-900 text-sm">Realtor</div>
+                <div className="text-xs text-gray-500 mt-1">Search and purchase reports</div>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">First name</label>
+                <input
+                  type="text"
+                  value={formData.firstName}
+                  onChange={e => update('firstName', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="Jane"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Last name</label>
+                <input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={e => update('lastName', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="Smith"
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Email address</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={e => update('email', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                placeholder="jane@company.com"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Password</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={e => update('password', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                placeholder="••••••••"
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-xs text-gray-500 mb-1">Phone number</label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={e => update('phone', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                placeholder="(416) 555-0100"
+              />
+            </div>
+            <button
+              onClick={() => {
+                if (!accountType) { setError('Please select an account type'); return }
+                if (!formData.firstName || !formData.email || !formData.password) { setError('Please fill in all required fields'); return }
+                setError(null)
+                setStep(2)
+              }}
+              className="w-full py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
+            >
+              Continue →
+            </button>
+          </div>
+        )}
+
+        {/* STEP 2 — Company profile */}
+        {step === 2 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h1 className="text-xl font-medium text-gray-900 mb-1">Company details</h1>
+            <p className="text-sm text-gray-500 mb-6">This information appears on every report you send</p>
+
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Company name</label>
+              <input
+                type="text"
+                value={formData.companyName}
+                onChange={e => update('companyName', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                placeholder="Smith Home Inspections Ltd."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Business email</label>
+                <input
+                  type="email"
+                  value={formData.companyEmail}
+                  onChange={e => update('companyEmail', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="info@company.com"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Business phone</label>
+                <input
+                  type="tel"
+                  value={formData.companyPhone}
+                  onChange={e => update('companyPhone', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="(416) 555-0100"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">License / certification #</label>
+                <input
+                  type="text"
+                  value={formData.licenseNumber}
+                  onChange={e => update('licenseNumber', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="OCHI-12345"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Website (optional)</label>
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={e => update('website', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="https://yoursite.com"
+                />
+              </div>
+            </div>
+            <div className="mb-3">
+              <label className="block text-xs text-gray-500 mb-1">Street address</label>
+              <input
+                type="text"
+                value={formData.addressLine1}
+                onChange={e => update('addressLine1', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                placeholder="123 Main St"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">City</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={e => update('city', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="Toronto"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Province / State</label>
+                <select
+                  value={formData.provinceState}
+                  onChange={e => update('provinceState', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] bg-white"
+                >
+                  <option value="">Select...</option>
+                  <optgroup label="Canada">
+                    <option value="AB">Alberta</option>
+                    <option value="BC">British Columbia</option>
+                    <option value="MB">Manitoba</option>
+                    <option value="NB">New Brunswick</option>
+                    <option value="NL">Newfoundland</option>
+                    <option value="NS">Nova Scotia</option>
+                    <option value="ON">Ontario</option>
+                    <option value="PE">PEI</option>
+                    <option value="QC">Quebec</option>
+                    <option value="SK">Saskatchewan</option>
+                  </optgroup>
+                  <optgroup label="United States">
+                    <option value="AL">Alabama</option>
+                    <option value="AK">Alaska</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="FL">Florida</option>
+                    <option value="GA">Georgia</option>
+                    <option value="IL">Illinois</option>
+                    <option value="NY">New York</option>
+                    <option value="TX">Texas</option>
+                    <option value="WA">Washington</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Postal / ZIP code</label>
+                <input
+                  type="text"
+                  value={formData.postalZip}
+                  onChange={e => update('postalZip', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                  placeholder="M5V 2T6"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Country</label>
+                <select
+                  value={formData.country}
+                  onChange={e => update('country', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] bg-white"
+                >
+                  <option value="CA">Canada</option>
+                  <option value="US">United States</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(1)}
+                className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => {
+                  if (!formData.companyName) { setError('Please enter your company name'); return }
+                  setError(null)
+                  setStep(3)
+                }}
+                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3 — Branding */}
+        {step === 3 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h1 className="text-xl font-medium text-gray-900 mb-1">Logo &amp; branding</h1>
+            <p className="text-sm text-gray-500 mb-6">Your logo appears on every report sent to clients</p>
+
+            {/* Logo upload */}
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center mb-4 cursor-pointer hover:border-[#1D9E75] transition-colors">
+              <div className="text-3xl mb-2">📷</div>
+              <div className="text-sm font-medium text-gray-700">Upload your company logo</div>
+              <div className="text-xs text-gray-400 mt-1">PNG or JPG, max 5MB</div>
+              <div className="text-xs text-gray-400 mt-1">A default logo will be generated if you skip this</div>
+              <button className="mt-3 px-4 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50">
+                Choose file
+              </button>
+            </div>
+
+            {/* Accent color */}
+            <div className="mb-4">
+              <label className="block text-xs text-gray-500 mb-1">Brand accent color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={formData.accentColor}
+                  onChange={e => update('accentColor', e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-200 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={formData.accentColor}
+                  onChange={e => update('accentColor', e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            {/* Disclaimer */}
+            <div className="mb-6">
+              <label className="block text-xs text-gray-500 mb-1">Default report disclaimer</label>
+              <textarea
+                value={formData.disclaimer}
+                onChange={e => update('disclaimer', e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(2)}
+                className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => { setError(null); setStep(4) }}
+                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4 — Team */}
+        {step === 4 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h1 className="text-xl font-medium text-gray-900 mb-1">Your team</h1>
+            <p className="text-sm text-gray-500 mb-6">Do you have other inspectors you'd like to add?</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button
+                onClick={() => update('hasteam', false)}
+                className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                  !formData.hasteam
+                    ? 'border-[#1D9E75] bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">👤</div>
+                <div className="font-medium text-gray-900 text-sm">Just me</div>
+                <div className="text-xs text-gray-500 mt-1">Independent operator</div>
+              </button>
+              <button
+                onClick={() => update('hasteam', true)}
+                className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                  formData.hasteam
+                    ? 'border-[#1D9E75] bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="text-2xl mb-2">👥</div>
+                <div className="font-medium text-gray-900 text-sm">I have a team</div>
+                <div className="text-xs text-gray-500 mt-1">Invite other inspectors</div>
+              </button>
+            </div>
+
+            {formData.hasteam && (
+              <div className="mb-6">
+                <label className="block text-xs text-gray-500 mb-1">
+                  Team member emails (one per line)
+                </label>
+                <textarea
+                  value={formData.teamEmails}
+                  onChange={e => update('teamEmails', e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] resize-none"
+                  placeholder="inspector2@company.com&#10;inspector3@company.com"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  They'll receive an email invite to join your company account
+                </p>
+              </div>
+            )}
+
+            {/* TOS */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-xs text-gray-500 leading-relaxed">
+              By creating an account you agree to the{' '}
+              <Link href="/terms/inspector" className="text-[#1D9E75] hover:underline">
+                Domicert Inspector Terms of Service
+              </Link>
+              {' '}including our data retention, marketplace participation, and revenue sharing policies.
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(3)}
+                className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Creating account...' : 'Create account →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <p className="text-center text-xs text-gray-400 mt-6">
+          Your data is protected under Canadian privacy law (PIPEDA)
+        </p>
+      </div>
+    </main>
+  )
+}
