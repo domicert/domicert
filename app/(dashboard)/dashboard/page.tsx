@@ -122,7 +122,26 @@ export default function DashboardPage() {
 
     loadDashboard()
   }, [])
-
+const handleResend = async (
+    inspectionId: string,
+    clientEmail: string,
+    clientName: string,
+    address: string
+  ) => {
+    if (!confirm(`Resend the report to ${clientEmail}?`)) return
+    try {
+      const response = await fetch('/api/inspections/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inspectionId, clientEmail, clientName, address }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error)
+      alert(`Report resent to ${clientEmail}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Resend failed')
+    }
+  }
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     window.location.href = '/'
@@ -276,13 +295,22 @@ export default function DashboardPage() {
                         {inspection.status}
                       </span>
                       {inspection.reports?.web_token && (
-                        <Link
-                          href={`/report/${inspection.reports.web_token}`}
-                          className="px-3 py-1 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"
-                        >
-                          view
-                        </Link>
-                      )}
+  <div className="flex items-center gap-1">
+    <Link
+      href={`/report/${inspection.reports.web_token}`}
+      className="px-3 py-1 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"
+    >
+      view
+    </Link>
+    <button
+      onClick={() => handleResend(inspection.id, inspection.client_email, inspection.client_name, inspection.properties?.address_line1)}
+      className="px-3 py-1 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50"
+      title="Resend report email"
+    >
+      resend
+    </button>
+  </div>
+)}
                     </div>
                   </div>
                 ))}
