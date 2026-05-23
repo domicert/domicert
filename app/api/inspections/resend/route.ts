@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       const { DomicertReport } = await import('@/lib/pdf/report')
 
       const generatedBuffer = await renderToBuffer(
-        createElement(DomicertReport, { data: reportData }) as unknown as React.ReactElement
+        createElement(DomicertReport, { data: reportData }) as never
       )
 
       // Store for future use
