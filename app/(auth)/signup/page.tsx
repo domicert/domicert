@@ -73,7 +73,12 @@ export default function SignupPage() {
         }
       })
       if (signUpError) throw signUpError
-      if (!data.user) throw new Error('No user returned from signup')
+      if (!data.user && !data.session) {
+        // Email confirmation required - this is expected
+        window.location.href = '/signup/confirm'
+      } else if (!data.user) {
+        throw new Error('No user returned from signup')
+      }
 
       // 2. Create company record
       const { data: company, error: companyError } = await supabase
