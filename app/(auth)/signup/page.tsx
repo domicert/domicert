@@ -73,11 +73,10 @@ export default function SignupPage() {
         }
       })
       if (signUpError) throw signUpError
-      if (!data.user && !data.session) {
-        // Email confirmation required - this is expected
+     if (!data.user) {
+        // Email confirmation required - redirect to confirm page
         window.location.href = '/signup/confirm'
-      } else if (!data.user) {
-        throw new Error('No user returned from signup')
+        return
       }
 
       // 2. Create company record
