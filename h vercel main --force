@@ -1,0 +1,27 @@
+[1mdiff --git a/app/api/inspections/resend/route.ts b/app/api/inspections/resend/route.ts[m
+[1mindex f71983a..2c0894c 100644[m
+[1m--- a/app/api/inspections/resend/route.ts[m
+[1m+++ b/app/api/inspections/resend/route.ts[m
+[36m@@ -1,7 +1,7 @@[m
+ import { NextRequest, NextResponse } from 'next/server'[m
+ import { createClient } from '@/lib/supabase/server'[m
+ import { Resend } from 'resend'[m
+[31m-[m
+[32m+[m[32mimport React from 'react'[m
+ const resend = new Resend(process.env.RESEND_API_KEY)[m
+ [m
+ export async function POST(request: NextRequest) {[m
+[36m@@ -121,11 +121,11 @@[m [mexport async function POST(request: NextRequest) {[m
+       }[m
+ [m
+       const { renderToBuffer } = await import('@react-pdf/renderer')[m
+[31m-      const React = await import('react')[m
+[32m+[m[32m      const { createElement } = await import('react')[m
+       const { DomicertReport } = await import('@/lib/pdf/report')[m
+ [m
+       const generatedBuffer = await renderToBuffer([m
+[31m-        React.default.createElement(DomicertReport, { data: reportData })[m
+[32m+[m[32m        createElement(DomicertReport, { data: reportData }) as unknown as React.ReactElement[m
+       )[m
+ [m
+       // Store for future use[m
