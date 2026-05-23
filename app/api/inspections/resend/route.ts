@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
-
+import React from 'react'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
@@ -121,11 +121,11 @@ export async function POST(request: NextRequest) {
       }
 
       const { renderToBuffer } = await import('@react-pdf/renderer')
-      const React = await import('react')
+      const { createElement } = await import('react')
       const { DomicertReport } = await import('@/lib/pdf/report')
 
       const generatedBuffer = await renderToBuffer(
-        React.default.createElement(DomicertReport, { data: reportData })
+        createElement(DomicertReport, { data: reportData }) as unknown as React.ReactElement
       )
 
       // Store for future use
