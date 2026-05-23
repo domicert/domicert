@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    const company = companyMember?.companies as Record<string, string> | null
+    const company = companyMember?.companies as unknown as Record<string, string> | null
 
     // 3. Create homeowner user if not exists
     let homeownerUserId = null
