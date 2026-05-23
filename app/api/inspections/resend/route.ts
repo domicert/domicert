@@ -122,12 +122,12 @@ export async function POST(request: NextRequest) {
 
       const { renderToBuffer } = await import('@react-pdf/renderer')
       const { DomicertReport } = await import('@/lib/pdf/report')
+      const { createElement } = await import('react')
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const generatedBuffer = await (renderToBuffer as any)(
-        <DomicertReport data={reportData} />
+        (createElement as any)(DomicertReport, { data: reportData })
       )
-
       // Store for future use
       await supabase.storage
         .from('reports')
