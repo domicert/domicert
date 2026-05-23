@@ -121,11 +121,11 @@ export async function POST(request: NextRequest) {
       }
 
       const { renderToBuffer } = await import('@react-pdf/renderer')
-      const { createElement } = await import('react')
       const { DomicertReport } = await import('@/lib/pdf/report')
 
-      const generatedBuffer = await renderToBuffer(
-        createElement(DomicertReport, { data: reportData }) as never
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const generatedBuffer = await (renderToBuffer as any)(
+        <DomicertReport data={reportData} />
       )
 
       // Store for future use
