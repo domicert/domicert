@@ -218,8 +218,9 @@ export async function POST(request: NextRequest) {
       counts,
     }
 
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(DomicertReport, { data: reportData })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfBuffer = await (renderToBuffer as any)(
+      (React.createElement as any)(DomicertReport, { data: reportData })
     )
 
     // 8. Store PDF in Supabase Storage
