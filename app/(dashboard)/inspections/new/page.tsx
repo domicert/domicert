@@ -327,17 +327,41 @@ const drivewayLabel = {
 
     return sections
   }
-
+const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, preview: string, caption: string}[]>>({})
   const [sections, setSections] = useState<Section[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [webLink, setWebLink] = useState<string | null>(null)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
-const handleSubmit = async () => {
+
+const getTierLimit = () => { ... }
+  const getTierUpgrade = () => { ... }
+  const totalPhotos = ...
+  const handlePhotoAdd = () => { ... }
+  const removePhoto = () => { ... }
+  const updatePhotoCaption = () => { ... }
+
+  const handleSubmit = async () => {
     setSubmitting(true)
     setSubmitError(null)
     try {
+      // Upload photos to Supabase Storage first
+      const photoData: Record<string, {path: string, caption: string}[]> = {}
+      
+      for (const [sectionId, photos] of Object.entries(sectionPhotos)) {
+        if (photos.length === 0) continue
+        photoData[sectionId] = []
+        for (const photo of photos) {
+          const ext = photo.file.name.split('.').pop()
+          const path = `photos/pending/${sectionId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+          const { createClient } = await import('@/lib/supabase/client')
+          const supabase = createClient()
+          await supabase.storage.from('photos').upload(path, photo.file, { upsert: true })
+          photoData[sectionId].push({ path, caption: photo.caption })
+        }
+      }
+
       const response = await fetch('/api/inspections/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -346,6 +370,7 @@ const handleSubmit = async () => {
           config,
           sections,
           selectedTier,
+          photoData,
         }),
       })
       const result = await response.json()
@@ -824,13 +849,67 @@ const handleSubmit = async () => {
                       </div>
 
                       <div className="mt-3">
-                        <label className="block text-xs text-gray-500 mb-1">Photos</label>
-                        <div className="flex items-center gap-2">
-                          <div className="border-2 border-dashed border-gray-200 rounded-lg p-3 text-center flex-1 cursor-pointer hover:border-[#1D9E75] transition-colors">
-                            <div className="text-xs text-gray-400">📷 Add photos</div>
-                          </div>
-                        </div>
-                      </div>
+  <div className="flex items-center justify-between mb-1">
+    <label className="block text-xs text-gray-500">Photos</label>
+    <span className="text-xs text-gray-400">
+      {(sectionPhotos[section.id] || []).length} / {
+        selectedTier === 'text' ? 0 :
+        selectedTier === 'basic' ? 5 :
+        selectedTier === 'pro' ? 15 :
+        selectedTier === 'pro_plus' ? 30 : '∞'
+      }
+    </span>
+  </div>
+
+  {/* Existing photos */}
+  {(sectionPhotos[section.id] || []).length > 0 && (
+    <div className="grid grid-cols-3 gap-2 mb-2">
+      {(sectionPhotos[section.id] || []).map((photo, idx) => (
+        <div key={idx} className="relative group">
+          <img
+            src={photo.preview}
+            alt={photo.caption || `Photo ${idx + 1}`}
+            className="w-full h-24 object-cover rounded-lg border border-gray-200"
+          />
+          <button
+            onClick={() => removePhoto(section.id, idx)}
+            className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            ×
+          </button>
+          <input
+            type="text"
+            placeholder="Add caption..."
+            value={photo.caption}
+            onChange={e => updatePhotoCaption(section.id, idx, e.target.value)}
+            className="w-full mt-1 px-2 py-1 border border-gray-200 rounded text-xs focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+          />
+        </div>
+      ))}
+    </div>
+  )}
+
+  {/* Add photo button */}
+  {selectedTier !== 'text' && (
+    <label className="block border-2 border-dashed border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-[#1D9E75] transition-colors">
+      <div className="text-xs text-gray-400">📷 Add photo</div>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        multiple
+        onChange={e => handlePhotoAdd(section.id, e.target.files)}
+        className="hidden"
+      />
+    </label>
+  )}
+
+  {selectedTier === 'text' && (
+    <div className="border-2 border-dashed border-gray-100 rounded-lg p-3 text-center">
+      <div className="text-xs text-gray-300">Photos not available on Text tier</div>
+    </div>
+  )}
+</div>
                     </div>
                   )}
                 </div>

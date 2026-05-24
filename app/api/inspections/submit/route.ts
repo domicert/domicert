@@ -237,7 +237,37 @@ export async function POST(request: NextRequest) {
       .from('reports')
       .update({ pdf_storage_path: pdfPath })
       .eq('id', report?.id)
+// 8b. Save photo records to database
+    const { photoData } = body
+    if (photoData && Object.keys(photoData).length > 0) {
+      for (const [tempSectionId, photos] of Object.entries(photoData)) {
+        // Find the matching section record by matching the section label
+        const matchingSection = await supabase
+          .from('inspection_sections')
+          .select('id')
+          .eq('inspection_id', inspection.id)
+          .eq('section_label', sections.find((s: {id: string, label: string}) => s.id === tempSectionId)?.label || '')
+          .single()
 
+        if (matchingSection.data) {
+          for (let i = 0; i < (photos as {path: string, caption: string}[]).length; i++) {
+            const photo = (photos as {path: string, caption: string}[])[i]
+            
+            // Move photo from pending to final path
+            const finalPath = `photos/${inspection.id}/${matchingSection.data.id}/${i}.${photo.path.split('.').pop()}`
+            await supabase.storage.from('photos').move(photo.path, finalPath)
+
+            await supabase.from('photos').insert({
+              inspection_id: inspection.id,
+              section_id: matchingSection.data.id,
+              storage_path: finalPath,
+              caption: photo.caption || null,
+              sort_order: i,
+            })
+          }
+        }
+      }
+    }
     // 9. Create survey record
     const { data: surveyRecord, error: surveyError } = await supabase
       .from('surveys')
