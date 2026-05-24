@@ -335,12 +335,70 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
   const [webLink, setWebLink] = useState<string | null>(null)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
 
-const getTierLimit = () => { ... }
-  const getTierUpgrade = () => { ... }
-  const totalPhotos = ...
-  const handlePhotoAdd = () => { ... }
-  const removePhoto = () => { ... }
-  const updatePhotoCaption = () => { ... }
+const getTierLimit = () => {
+    switch (selectedTier) {
+      case 'text': return 0
+      case 'basic': return 5
+      case 'pro': return 15
+      case 'pro_plus': return 30
+      case 'unlimited': return Infinity
+      default: return 0
+    }
+  }
+
+  const getTierUpgrade = (currentCount: number) => {
+    if (currentCount < 5) return { tier: 'basic', label: 'Basic', limit: 5 }
+    if (currentCount < 15) return { tier: 'pro', label: 'Pro', limit: 15 }
+    if (currentCount < 30) return { tier: 'pro_plus', label: 'Pro+', limit: 30 }
+    return { tier: 'unlimited', label: 'Unlimited', limit: Infinity }
+  }
+
+  const totalPhotos = Object.values(sectionPhotos).reduce((acc, photos) => acc + photos.length, 0)
+
+  const handlePhotoAdd = (sectionId: string, files: FileList | null) => {
+    if (!files) return
+    const limit = getTierLimit()
+    const newFiles = Array.from(files)
+    const currentTotal = totalPhotos
+    const wouldBe = currentTotal + newFiles.length
+
+    if (wouldBe > limit) {
+      const upgrade = getTierUpgrade(limit)
+      const confirm = window.confirm(
+        `You've reached the ${selectedTier.replace('_', '+')} limit of ${limit} photos.\n\nUpgrade to ${upgrade.label} (up to ${upgrade.limit} photos)?\n\nDuring your free trial, no charges apply.`
+      )
+      if (confirm) {
+        setSelectedTier(upgrade.tier as typeof selectedTier)
+      } else {
+        return
+      }
+    }
+
+    const newPhotos = newFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      caption: '',
+    }))
+
+    setSectionPhotos(prev => ({
+      ...prev,
+      [sectionId]: [...(prev[sectionId] || []), ...newPhotos],
+    }))
+  }
+
+  const removePhoto = (sectionId: string, idx: number) => {
+    setSectionPhotos(prev => ({
+      ...prev,
+      [sectionId]: prev[sectionId].filter((_, i) => i !== idx),
+    }))
+  }
+
+  const updatePhotoCaption = (sectionId: string, idx: number, caption: string) => {
+    setSectionPhotos(prev => ({
+      ...prev,
+      [sectionId]: prev[sectionId].map((p, i) => i === idx ? { ...p, caption } : p),
+    }))
+  }
 
   const handleSubmit = async () => {
     setSubmitting(true)
