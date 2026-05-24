@@ -328,6 +328,12 @@ const drivewayLabel = {
     return sections
   }
 const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, preview: string, caption: string}[]>>({})
+  const [upsellModal, setUpsellModal] = useState<{
+    show: boolean
+    sectionId: string
+    files: FileList | null
+    upgrade: { tier: string, label: string, limit: number }
+  } | null>(null)
   const [sections, setSections] = useState<Section[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -364,14 +370,8 @@ const getTierLimit = () => {
 
     if (wouldBe > limit) {
       const upgrade = getTierUpgrade(limit)
-      const confirm = window.confirm(
-        `You've reached the ${selectedTier.replace('_', '+')} limit of ${limit} photos.\n\nUpgrade to ${upgrade.label} (up to ${upgrade.limit} photos)?\n\nDuring your free trial, no charges apply.`
-      )
-      if (confirm) {
-        setSelectedTier(upgrade.tier as typeof selectedTier)
-      } else {
-        return
-      }
+      setUpsellModal({ show: true, sectionId, files, upgrade })
+      return
     }
 
     const newPhotos = newFiles.map(file => ({
@@ -986,7 +986,45 @@ const getTierLimit = () => {
             </div>
           </div>
         )}
-
+{/* UPSELL MODAL */}
+        {upsellModal?.show && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+              <h3 className="font-medium text-gray-900 mb-2">Photo limit reached</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                You've reached the limit for your current tier. 
+                Upgrade to <strong>{upsellModal.upgrade.label}</strong> to add up to {upsellModal.upgrade.limit} photos.
+                During your free trial, no charges apply.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setUpsellModal(null)}
+                  className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Stay on {selectedTier.replace('_', '+')}
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedTier(upsellModal.upgrade.tier as typeof selectedTier)
+                    const newPhotos = Array.from(upsellModal.files || []).map(file => ({
+                      file,
+                      preview: URL.createObjectURL(file),
+                      caption: '',
+                    }))
+                    setSectionPhotos(prev => ({
+                      ...prev,
+                      [upsellModal.sectionId]: [...(prev[upsellModal.sectionId] || []), ...newPhotos],
+                    }))
+                    setUpsellModal(null)
+                  }}
+                  className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56]"
+                >
+                  Upgrade to {upsellModal.upgrade.label}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* SUCCESS SCREEN */}
         {submitted && (
           <div className="max-w-lg mx-auto text-center py-12">
