@@ -200,7 +200,10 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
             const ext = photo.path.split('.').pop()
             const finalPath = `photos/${inspection.id}/${dbSectionId}/${i}.${ext}`
 
-            const { error: moveError } = await supabase.storage.from('photos').move(photo.path, finalPath)
+            const fromPath = photo.path.replace(/^photos\//, '')
+const toPath = finalPath.replace(/^photos\//, '')
+const { error: moveError } = await supabase.storage.from('photos').move(fromPath, toPath)
+console.log('Move result:', { from: fromPath, to: toPath, error: moveError?.message })
             console.log('Move result:', { from: photo.path, to: finalPath, error: moveError?.message })
             await supabase.from('photos').insert({
               inspection_id: inspection.id,
