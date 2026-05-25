@@ -49,20 +49,11 @@ export default async function InspectorDirectoryPage() {
       province_state,
       accent_color,
       inspection_count,
-      created_at,
-      inspector_badges (
-        badge_code,
-        badge_definitions (
-          name,
-          icon,
-          color,
-          sort_order
-        )
-      )
+      created_at
     `)
     .eq('profile_public', true)
     .order('inspection_count', { ascending: false })
-console.log('Companies:', companies?.length, 'Error:', companiesError?.message)
+  console.log('Companies:', companies?.length, 'Error:', companiesError?.message)
   const inspectors = (companies || []) as unknown as Company[]
 
   const getInitials = (name: string) => {
@@ -90,7 +81,7 @@ console.log('Companies:', companies?.length, 'Error:', companiesError?.message)
       <div className="max-w-6xl mx-auto px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-medium text-gray-900 mb-2">Find a home inspector</h1>
-          <p className="text-gray-500">Certified inspectors across Canada, powered by Domicert</p>
+          <p className="text-gray-500">Certified inspectors across North America, powered by Domicert</p>
         </div>
 
         <p className="text-sm text-gray-500 mb-6">
