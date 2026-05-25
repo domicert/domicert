@@ -409,10 +409,11 @@ const getTierLimit = () => {
       
       for (const [sectionId, photos] of Object.entries(sectionPhotos)) {
         if (photos.length === 0) continue
-        photoData[sectionId] = []
+        const sectionLabel = sections.find(s => s.id === sectionId)?.label || sectionId
+        photoData[sectionLabel] = []
         for (const photo of photos) {
           const ext = photo.file.name.split('.').pop()
-          const path = `photos/pending/${sectionId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+          const path = `photos/pending/${sectionLabel.replace(/\s+/g, '-').toLowerCase()}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
           const { createClient } = await import('@/lib/supabase/client')
           const supabase = createClient()
           await supabase.storage.from('photos').upload(path, photo.file, { upsert: true })

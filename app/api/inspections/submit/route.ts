@@ -184,11 +184,11 @@ export async function POST(request: NextRequest) {
 console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
     if (photoData && Object.keys(photoData).length > 0) {
       for (const [tempSectionId, photos] of Object.entries(photoData)) {
-        const matchingSection = await supabase
+       const matchingSection = await supabase
           .from('inspection_sections')
           .select('id')
           .eq('inspection_id', inspection.id)
-          .eq('section_label', sections.find((s: { id: string; label: string }) => s.id === tempSectionId)?.label || '')
+          .eq('section_label', tempSectionId)
           .single()
 
         if (matchingSection.data) {
