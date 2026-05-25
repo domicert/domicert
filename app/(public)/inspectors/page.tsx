@@ -83,7 +83,6 @@ export default function InspectorDirectoryPage() {
         .order('inspection_count', { ascending: false })
 
       if (data) {
-        // Enrich with survey ratings
         const enriched = await Promise.all(data.map(async (company) => {
           const { data: surveys } = await supabase
             .from('surveys')
@@ -157,7 +156,6 @@ export default function InspectorDirectoryPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Nav */}
       <nav className="bg-white border-b border-gray-100 px-8 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
@@ -175,13 +173,11 @@ export default function InspectorDirectoryPage() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-medium text-gray-900 mb-2">Find a home inspector</h1>
           <p className="text-gray-500">Certified inspectors across Canada, powered by Domicert</p>
         </div>
 
-        {/* Search */}
         <div className="flex gap-3 mb-6">
           <input
             type="text"
@@ -215,7 +211,6 @@ export default function InspectorDirectoryPage() {
           {search ? ` matching "${search}"` : ''}
         </p>
 
-        {/* Inspector grid */}
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-4xl mb-4">🔍</div>
@@ -231,10 +226,8 @@ export default function InspectorDirectoryPage() {
               return (
                 <div key={inspector.id} className="bg-white rounded-xl border border-gray-200 p-5">
                   <div className="flex gap-3">
-                    {/* Left — main info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-3 mb-3">
-                        {/* Avatar */}
                         <div
                           className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
                           style={{ backgroundColor: inspector.accent_color || '#1D9E75' }}
@@ -262,7 +255,6 @@ export default function InspectorDirectoryPage() {
                         </div>
                       </div>
 
-                      {/* Stats */}
                       <div className="flex gap-1.5 flex-wrap mb-3">
                         <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-full text-xs text-gray-600">
                           {inspector.inspection_count || 0} inspections
@@ -280,7 +272,6 @@ export default function InspectorDirectoryPage() {
                       </div>
                     </div>
 
-                    {/* Right — badges */}
                     {badges.length > 0 && (
                       <div className="w-20 flex-shrink-0 border-l border-gray-100 pl-3">
                         <p className="text-xs text-gray-400 mb-2 text-center">Badges</p>
@@ -320,11 +311,10 @@ export default function InspectorDirectoryPage() {
                     )}
                   </div>
 
-                 {/* Footer */}
                   <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
                     {inspector.email && (
                       
-                        href={`mailto:${inspector.email}`}
+                        href={'mailto:' + inspector.email}
                         className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 text-center transition-colors"
                       >
                         Email
@@ -343,6 +333,7 @@ export default function InspectorDirectoryPage() {
                     <div className="flex-1 py-1.5 bg-[#1D9E75] rounded-lg text-xs text-white text-center">
                       View profile
                     </div>
+                  </div>
                 </div>
               )
             })}
