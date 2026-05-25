@@ -28,28 +28,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     backgroundColor: colors.white,
   },
-  // Add to StyleSheet.create({...}):
-photoGrid: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 8,
-  marginTop: 10,
-},
-photoBlock: {
-  width: '48%',
-},
-photoImage: {
-  width: '100%',
-  height: 140,
-  objectFit: 'cover',
-  borderRadius: 4,
-},
-photoCaption: {
-  fontSize: 7,
-  color: colors.gray,
-  marginTop: 3,
-  textAlign: 'center',
-},
+  
   // Cover page
   cover: {
     backgroundColor: colors.green,
