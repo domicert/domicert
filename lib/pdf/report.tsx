@@ -211,7 +211,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontFamily: 'Helvetica-Bold',
     color: colors.black,
-    flex: 1,
   },
   findingSection: {
     fontSize: 8,
