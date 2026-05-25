@@ -532,13 +532,13 @@ export function DomicertReport({ data }: { data: ReportData }) {
                         {badge.text}
                       </Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.findingLabel}>{item.label}</Text>
-                      <Text style={styles.findingSection}>{item.sectionLabel}</Text>
-                      {item.notes && item.notes !== "See photo" && (
-  <Text style={styles.findingNotes}>{item.notes}</Text>
-                      )}
-                    </View>
+                    <View style={{ flex: 1, flexDirection: 'column' }}>
+  <Text style={styles.findingLabel}>{item.label}</Text>
+  <Text style={styles.findingSection}>{item.sectionLabel}</Text>
+  {item.notes && item.notes !== "See photo" && (
+    <Text style={styles.findingNotes}>{item.notes}</Text>
+  )}
+</View>
                   </View>
                 )
               })}
@@ -557,13 +557,13 @@ export function DomicertReport({ data }: { data: ReportData }) {
                         {badge.text}
                       </Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.findingLabel}>{item.label}</Text>
-                      <Text style={styles.findingSection}>{item.sectionLabel}</Text>
-                     {item.notes && item.notes !== "See photo" && (
-  <Text style={styles.findingNotes}>{item.notes}</Text>
-)}
-                    </View>
+                    <View style={{ flex: 1, flexDirection: 'column' }}>
+  <Text style={styles.findingLabel}>{item.label}</Text>
+  <Text style={styles.findingSection}>{item.sectionLabel}</Text>
+  {item.notes && item.notes !== "See photo" && (
+    <Text style={styles.findingNotes}>{item.notes}</Text>
+  )}
+</View>
                   </View>
                 )
               })}
