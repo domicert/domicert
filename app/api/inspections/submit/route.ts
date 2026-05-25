@@ -200,8 +200,8 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
             const ext = photo.path.split('.').pop()
             const finalPath = `photos/${inspection.id}/${dbSectionId}/${i}.${ext}`
 
-            await supabase.storage.from('photos').move(photo.path, finalPath)
-            console.log('Photo moved to:', finalPath)
+            const { error: moveError } = await supabase.storage.from('photos').move(photo.path, finalPath)
+            console.log('Move result:', { from: photo.path, to: finalPath, error: moveError?.message })
             await supabase.from('photos').insert({
               inspection_id: inspection.id,
               section_id: dbSectionId,
@@ -234,7 +234,7 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
               .createSignedUrl(photo.storagePath, 120)
 
             if (!signedData?.signedUrl) return null
-
+console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.storagePath)
             try {
               const src = await toBase64DataUri(signedData.signedUrl)
               return { src, caption: photo.caption }
