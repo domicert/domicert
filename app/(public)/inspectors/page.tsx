@@ -320,7 +320,7 @@ export default function InspectorDirectoryPage() {
                     )}
                   </div>
 
-                  {/* Footer */}
+                 {/* Footer */}
                   <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
                     {inspector.email && (
                       
@@ -344,12 +344,3 @@ export default function InspectorDirectoryPage() {
                       View profile
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </main>
-  )
-}
