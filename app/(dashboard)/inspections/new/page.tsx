@@ -344,7 +344,7 @@ const [draftRestored, setDraftRestored] = useState(false)
 
   // Auto-save draft to localStorage
   useEffect(() => {
-    if (step === 1 && !property.address) return
+    if (!property.clientName && !property.address) return // Don't save completely empty state
     const draft = {
       step,
       selectedTier,
