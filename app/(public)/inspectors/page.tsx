@@ -36,7 +36,7 @@ const badgeColors: Record<string, { bg: string, border: string, text: string }> 
 export default async function InspectorDirectoryPage() {
   const supabase = await createClient()
 
-  const { data: companies } = await supabase
+ const { data: companies, error: companiesError } = await supabase
     .from('companies')
     .select(`
       id,
@@ -62,7 +62,7 @@ export default async function InspectorDirectoryPage() {
     `)
     .eq('profile_public', true)
     .order('inspection_count', { ascending: false })
-
+console.log('Companies:', companies?.length, 'Error:', companiesError?.message)
   const inspectors = (companies || []) as unknown as Company[]
 
   const getInitials = (name: string) => {
