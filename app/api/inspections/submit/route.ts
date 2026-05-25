@@ -197,23 +197,19 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
 
           for (let i = 0; i < (photos as { path: string; caption: string }[]).length; i++) {
             const photo = (photos as { path: string; caption: string }[])[i]
-            const ext = photo.path.split('.').pop()
-            const finalPath = `photos/${inspection.id}/${dbSectionId}/${i}.${ext}`
-
-            const fromPath = photo.path.replace(/^photos\//, '')
-const toPath = finalPath.replace(/^photos\//, '')
-const { error: moveError } = await supabase.storage.from('photos').move(fromPath, toPath)
-console.log('Move result:', { from: fromPath, to: toPath, error: moveError?.message })
-            console.log('Move result:', { from: photo.path, to: finalPath, error: moveError?.message })
+            const storagePath = photo.path
+            console.log('Using photo path:', storagePath)
             await supabase.from('photos').insert({
               inspection_id: inspection.id,
               section_id: dbSectionId,
-              storage_path: finalPath,
+              storage_path: storagePath,
               caption: photo.caption || null,
               sort_order: i,
             })
-
-            sectionPhotoMap[dbSectionId].push({ storagePath: finalPath, caption: photo.caption || null })
+            sectionPhotoMap[dbSectionId].push({
+              storagePath: storagePath,
+              caption: photo.caption || null,
+            })
           }
         }
       }
@@ -232,9 +228,10 @@ console.log('Move result:', { from: fromPath, to: toPath, error: moveError?.mess
       if (sectionRecord) {
         const base64Photos = await Promise.all(
           photos.map(async (photo) => {
+            const cleanPath = photo.storagePath.replace(/^photos\//, '')
             const { data: signedData } = await supabase.storage
               .from('photos')
-              .createSignedUrl(photo.storagePath, 120)
+              .createSignedUrl(cleanPath, 120)
 
             if (!signedData?.signedUrl) return null
 console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.storagePath)
