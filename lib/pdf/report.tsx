@@ -255,8 +255,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     gap: 8,
   },
-  itemLabel: {
-    flex: 1,
+ itemLabel: {
     fontSize: 9,
     color: colors.black,
   },
