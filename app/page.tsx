@@ -18,7 +18,10 @@ export default function Home() {
             <div className="text-xs text-gray-400 tracking-widest uppercase">Certified · Lasting · Trusted</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
+          <Link href="/inspectors" className="text-sm text-gray-500 hover:text-gray-900">
+            Find an inspector
+          </Link>
           <Link
             href="/login"
             className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
@@ -118,8 +121,11 @@ export default function Home() {
               Search and purchase historical inspection reports on any property. Know what you're selling before you list it.
             </p>
             <Link href="/signup?type=realtor" className="text-sm text-[#1D9E75] font-medium hover:underline">
-              Search reports →
-            </Link>
+  Search reports →
+</Link>
+<Link href="/inspectors" className="text-sm text-[#1D9E75] font-medium hover:underline block mt-1">
+  Find an inspector →
+</Link>
           </div>
 
           {/* Homeowner card */}
