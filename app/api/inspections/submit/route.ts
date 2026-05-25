@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
     // 7. Save photos FIRST (must happen before PDF generation)
     const { photoData } = body
     const sectionPhotoMap: Record<string, { storagePath: string; caption: string | null }[]> = {}
-
+console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
     if (photoData && Object.keys(photoData).length > 0) {
       for (const [tempSectionId, photos] of Object.entries(photoData)) {
         const matchingSection = await supabase
@@ -201,6 +201,7 @@ export async function POST(request: NextRequest) {
             const finalPath = `photos/${inspection.id}/${dbSectionId}/${i}.${ext}`
 
             await supabase.storage.from('photos').move(photo.path, finalPath)
+            console.log('Photo moved to:', finalPath)
             await supabase.from('photos').insert({
               inspection_id: inspection.id,
               section_id: dbSectionId,
