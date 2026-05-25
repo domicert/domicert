@@ -409,8 +409,8 @@ const getTierLimit = () => {
       
       for (const [sectionId, photos] of Object.entries(sectionPhotos)) {
         if (photos.length === 0) continue
-        const sectionLabel = sections.find(s => s.id === sectionId)?.label || sectionId
-        photoData[sectionLabel] = []
+       const sectionLabel = sections.find(s => s.id === sectionId)?.label || sectionId
+        if (!photoData[sectionLabel]) photoData[sectionLabel] = []
         for (const photo of photos) {
           const ext = photo.file.name.split('.').pop()
           const path = `photos/pending/${sectionLabel.replace(/\s+/g, '-').toLowerCase()}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
