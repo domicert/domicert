@@ -417,7 +417,7 @@ const getTierLimit = () => {
           const { createClient } = await import('@/lib/supabase/client')
           const supabase = createClient()
           await supabase.storage.from('photos').upload(path, photo.file, { upsert: true })
-          photoData[sectionId].push({ path, caption: photo.caption })
+          photoData[sectionLabel].push({ path, caption: photo.caption })
         }
       }
 
