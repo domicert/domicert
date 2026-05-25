@@ -253,6 +253,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
     }
 // Fetch company logo as base64
     let logoSrc: string | undefined
+    console.log('Company logo path:', company?.logo_storage_path)
     if (company?.logo_storage_path) {
       try {
         const { data: signedLogo } = await supabase.storage
