@@ -28,6 +28,28 @@ const styles = StyleSheet.create({
     color: colors.black,
     backgroundColor: colors.white,
   },
+  // Add to StyleSheet.create({...}):
+photoGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 8,
+  marginTop: 10,
+},
+photoBlock: {
+  width: '48%',
+},
+photoImage: {
+  width: '100%',
+  height: 140,
+  objectFit: 'cover',
+  borderRadius: 4,
+},
+photoCaption: {
+  fontSize: 7,
+  color: colors.gray,
+  marginTop: 3,
+  textAlign: 'center',
+},
   // Cover page
   cover: {
     backgroundColor: colors.green,
@@ -293,6 +315,11 @@ const styles = StyleSheet.create({
   },
 })
 
+interface ReportPhoto {
+  src: string
+  caption: string | null
+}
+
 interface ReportItem {
   id: string
   label: string
@@ -305,6 +332,7 @@ interface ReportSection {
   label: string
   items: ReportItem[]
   notes: string
+  photos: ReportPhoto[]
 }
 
 interface ReportData {
@@ -508,7 +536,9 @@ export function DomicertReport({ data }: { data: ReportData }) {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.findingLabel}>{item.label}</Text>
                       <Text style={styles.findingSection}>{item.sectionLabel}</Text>
-                      {item.notes && <Text style={styles.findingNotes}>{item.notes}</Text>}
+                      {item.notes && item.notes !== "See photo" && (
+  <Text style={styles.findingNotes}>{item.notes}</Text>
+                      )}
                     </View>
                   </View>
                 )
@@ -531,7 +561,8 @@ export function DomicertReport({ data }: { data: ReportData }) {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.findingLabel}>{item.label}</Text>
                       <Text style={styles.findingSection}>{item.sectionLabel}</Text>
-                      {item.notes && <Text style={styles.findingNotes}>{item.notes}</Text>}
+                      {item.notes && item.notes !== "See photo" && (
+  <Text style={styles.findingNotes}>{item.notes}</Text>
                     </View>
                   </View>
                 )
@@ -573,7 +604,9 @@ export function DomicertReport({ data }: { data: ReportData }) {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.itemLabel}>{item.label}</Text>
-                        {item.notes && <Text style={styles.itemNotes}>{item.notes}</Text>}
+                        {item.notes && item.notes !== "See photo" && (
+                          <Text style={styles.itemNotes}>{item.notes}</Text>
+                        )}
                       </View>
                     </View>
                   )
@@ -586,6 +619,44 @@ export function DomicertReport({ data }: { data: ReportData }) {
                     <Text style={{ fontSize: 9, color: colors.black }}>{section.notes}</Text>
                   </View>
                 ) : null}
+                {section.photos && section.photos.length > 0 && (
+                  <View style={styles.photoGrid}>
+                    {section.photos.map((photo, idx) => (
+                      <View key={idx} style={styles.photoBlock}>
+                        <Image src={photo.src} style={styles.photoImage} />
+                        {photo.caption && (
+                          <Text style={styles.photoCaption}>{photo.caption}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+                  )
+                })}
+                {section.notes ? (
+                  <View style={{ marginTop: 10, padding: 8, backgroundColor: colors.lightGray, borderRadius: 4 }}>
+                    <Text style={{ fontSize: 8, color: colors.gray, marginBottom: 3, fontFamily: 'Helvetica-Bold' }}>
+                      Inspector notes:
+                    </Text>
+                    <Text style={{ fontSize: 9, color: colors.black }}>{section.notes}</Text>
+                  </View>
+                ) : null}
+
+                {section.photos && section.photos.length > 0 && (
+                  <View style={styles.photoGrid}>
+                    {section.photos.map((photo, idx) => (
+                      <View key={idx} style={styles.photoBlock}>
+                        <Image src={photo.src} style={styles.photoImage} />
+                        {photo.caption && (
+                          <Text style={styles.photoCaption}>{photo.caption}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
             </View>
           </View>

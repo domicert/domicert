@@ -7,6 +7,16 @@ import React from 'react'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+async function toBase64DataUri(url: string): Promise<string> {
+  const res = await fetch(url)
+  const buffer = await res.arrayBuffer()
+  const base64 = Buffer.from(buffer).toString('base64')
+  const contentType = res.headers.get('content-type') ?? 'image/jpeg'
+  return `data:${contentType};base64,${base64}`
+}
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -149,7 +159,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Create report record with web token
+    /// 6. Create report record with web token
     const webToken = crypto.randomUUID()
     const webTokenExpiry = new Date()
     webTokenExpiry.setFullYear(webTokenExpiry.getFullYear() + 2)
@@ -170,7 +180,79 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    // 7. Generate PDF
+    // 7. Save photos FIRST (must happen before PDF generation)
+    const { photoData } = body
+    const sectionPhotoMap: Record<string, { storagePath: string; caption: string | null }[]> = {}
+
+    if (photoData && Object.keys(photoData).length > 0) {
+      for (const [tempSectionId, photos] of Object.entries(photoData)) {
+        const matchingSection = await supabase
+          .from('inspection_sections')
+          .select('id')
+          .eq('inspection_id', inspection.id)
+          .eq('section_label', sections.find((s: { id: string; label: string }) => s.id === tempSectionId)?.label || '')
+          .single()
+
+        if (matchingSection.data) {
+          const dbSectionId = matchingSection.data.id
+          sectionPhotoMap[dbSectionId] = []
+
+          for (let i = 0; i < (photos as { path: string; caption: string }[]).length; i++) {
+            const photo = (photos as { path: string; caption: string }[])[i]
+            const ext = photo.path.split('.').pop()
+            const finalPath = `photos/${inspection.id}/${dbSectionId}/${i}.${ext}`
+
+            await supabase.storage.from('photos').move(photo.path, finalPath)
+            await supabase.from('photos').insert({
+              inspection_id: inspection.id,
+              section_id: dbSectionId,
+              storage_path: finalPath,
+              caption: photo.caption || null,
+              sort_order: i,
+            })
+
+            sectionPhotoMap[dbSectionId].push({ storagePath: finalPath, caption: photo.caption || null })
+          }
+        }
+      }
+    }
+
+    // 8. Fetch photos as base64, keyed by section label for PDF lookup
+    const sectionLabelPhotoMap: Record<string, { src: string; caption: string | null }[]> = {}
+
+    for (const [dbSectionId, photos] of Object.entries(sectionPhotoMap)) {
+      const { data: sectionRecord } = await supabase
+        .from('inspection_sections')
+        .select('section_label')
+        .eq('id', dbSectionId)
+        .single()
+
+      if (sectionRecord) {
+        const base64Photos = await Promise.all(
+          photos.map(async (photo) => {
+            const { data: signedData } = await supabase.storage
+              .from('photos')
+              .createSignedUrl(photo.storagePath, 120)
+
+            if (!signedData?.signedUrl) return null
+
+            try {
+              const src = await toBase64DataUri(signedData.signedUrl)
+              return { src, caption: photo.caption }
+            } catch {
+              return null
+            }
+          })
+        )
+
+        sectionLabelPhotoMap[sectionRecord.section_label] = base64Photos.filter(Boolean) as {
+          src: string
+          caption: string | null
+        }[]
+      }
+    }
+
+    // 9. Generate PDF
     const reportData = {
       property: {
         address: property.address,
@@ -178,12 +260,12 @@ export async function POST(request: NextRequest) {
         provinceState: property.provinceState,
         postalZip: property.postalZip,
         propertyType: {
-        single_family: 'Single-family home',
-        semi: 'Semi-detached',
-        townhouse: 'Townhouse',
-        condo: 'Condo',
-        multi: 'Multi-unit',
-      }[property.propertyType as string] || property.propertyType,
+          single_family: 'Single-family home',
+          semi: 'Semi-detached',
+          townhouse: 'Townhouse',
+          condo: 'Condo',
+          multi: 'Multi-unit',
+        }[property.propertyType as string] || property.propertyType,
         yearBuilt: property.yearBuilt,
         floors: config.floors,
         bedrooms: config.bedrooms,
@@ -209,11 +291,12 @@ export async function POST(request: NextRequest) {
         tier: selectedTier,
         fee: property.inspectionFee,
       },
-      sections: sections.map((s: { label: string, id: string, items: { label: string, rating: string | null, notes: string }[], notes: string }) => ({
+      sections: sections.map((s: { label: string; id: string; items: { label: string; rating: string | null; notes: string }[]; notes: string }) => ({
         id: s.id,
         label: s.label,
         items: s.items,
         notes: s.notes,
+        photos: sectionLabelPhotoMap[s.label] ?? [],
       })),
       counts,
     }
@@ -223,52 +306,18 @@ export async function POST(request: NextRequest) {
       (React.createElement as any)(DomicertReport, { data: reportData })
     )
 
-    // 8. Store PDF in Supabase Storage
+    // 10. Store PDF in Supabase Storage
     const pdfPath = `reports/${inspection.id}/report.pdf`
     await supabase.storage
       .from('reports')
-      .upload(pdfPath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      })
+      .upload(pdfPath, pdfBuffer, { contentType: 'application/pdf', upsert: true })
 
-    // Update report with PDF path
     await supabase
       .from('reports')
       .update({ pdf_storage_path: pdfPath })
       .eq('id', report?.id)
-// 8b. Save photo records to database
-    const { photoData } = body
-    if (photoData && Object.keys(photoData).length > 0) {
-      for (const [tempSectionId, photos] of Object.entries(photoData)) {
-        // Find the matching section record by matching the section label
-        const matchingSection = await supabase
-          .from('inspection_sections')
-          .select('id')
-          .eq('inspection_id', inspection.id)
-          .eq('section_label', sections.find((s: {id: string, label: string}) => s.id === tempSectionId)?.label || '')
-          .single()
 
-        if (matchingSection.data) {
-          for (let i = 0; i < (photos as {path: string, caption: string}[]).length; i++) {
-            const photo = (photos as {path: string, caption: string}[])[i]
-            
-            // Move photo from pending to final path
-            const finalPath = `photos/${inspection.id}/${matchingSection.data.id}/${i}.${photo.path.split('.').pop()}`
-            await supabase.storage.from('photos').move(photo.path, finalPath)
-
-            await supabase.from('photos').insert({
-              inspection_id: inspection.id,
-              section_id: matchingSection.data.id,
-              storage_path: finalPath,
-              caption: photo.caption || null,
-              sort_order: i,
-            })
-          }
-        }
-      }
-    }
-    // 9. Create survey record
+    // 11. Create survey record
     const { data: surveyRecord, error: surveyError } = await supabase
       .from('surveys')
       .insert({
@@ -286,7 +335,7 @@ export async function POST(request: NextRequest) {
       ? `${process.env.NEXT_PUBLIC_APP_URL}/survey/${surveyRecord.token}`
       : null
 
-    // 10. Send email via Resend
+    // 12. Send email via Resend
     const webLink = `${process.env.NEXT_PUBLIC_APP_URL}/report/${webToken}`
     const propertyAddress = `${property.address}, ${property.city}`
 
@@ -346,7 +395,7 @@ export async function POST(request: NextRequest) {
       ],
     })
 
-    // 10. Update company inspection count
+    // 13. Update company inspection count
     if (companyMember?.company_id) {
       await supabase.rpc('increment_inspection_count', {
         company_id_param: companyMember.company_id
