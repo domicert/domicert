@@ -561,8 +561,9 @@ export function DomicertReport({ data }: { data: ReportData }) {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.findingLabel}>{item.label}</Text>
                       <Text style={styles.findingSection}>{item.sectionLabel}</Text>
-                      {item.notes && item.notes !== "See photo" && (
+                     {item.notes && item.notes !== "See photo" && (
   <Text style={styles.findingNotes}>{item.notes}</Text>
+)}
                     </View>
                   </View>
                 )

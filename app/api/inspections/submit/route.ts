@@ -15,8 +15,6 @@ async function toBase64DataUri(url: string): Promise<string> {
   return `data:${contentType};base64,${base64}`
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
