@@ -1,7 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
 interface Badge {
   badge_code: string
   badge_definitions: {
