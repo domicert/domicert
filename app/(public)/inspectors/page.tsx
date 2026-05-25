@@ -203,6 +203,33 @@ export default function InspectorDirectoryPage() {
             <option value="PE">PEI</option>
             <option value="QC">Quebec</option>
             <option value="SK">Saskatchewan</option>
+            <optgroup label="United States">
+              <option value="AL">Alabama</option>
+              <option value="AK">Alaska</option>
+              <option value="AZ">Arizona</option>
+              <option value="CA">California</option>
+              <option value="CO">Colorado</option>
+              <option value="CT">Connecticut</option>
+              <option value="FL">Florida</option>
+              <option value="GA">Georgia</option>
+              <option value="IL">Illinois</option>
+              <option value="IN">Indiana</option>
+              <option value="MA">Massachusetts</option>
+              <option value="MI">Michigan</option>
+              <option value="MN">Minnesota</option>
+              <option value="MO">Missouri</option>
+              <option value="NJ">New Jersey</option>
+              <option value="NY">New York</option>
+              <option value="NC">North Carolina</option>
+              <option value="OH">Ohio</option>
+              <option value="OR">Oregon</option>
+              <option value="PA">Pennsylvania</option>
+              <option value="TN">Tennessee</option>
+              <option value="TX">Texas</option>
+              <option value="VA">Virginia</option>
+              <option value="WA">Washington</option>
+              <option value="WI">Wisconsin</option>
+            </optgroup>
           </select>
         </div>
 
