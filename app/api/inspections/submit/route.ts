@@ -215,8 +215,9 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
       }
     }
 
-    // 8. Fetch photos as base64, keyed by section label for PDF lookup
+   // 8. Fetch photos as base64, keyed by section label for PDF lookup
     const sectionLabelPhotoMap: Record<string, { src: string; caption: string | null }[]> = {}
+    console.log('sectionPhotoMap keys:', Object.keys(sectionPhotoMap))
 
     for (const [dbSectionId, photos] of Object.entries(sectionPhotoMap)) {
       const { data: sectionRecord } = await supabase
