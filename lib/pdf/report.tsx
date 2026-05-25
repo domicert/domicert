@@ -611,7 +611,6 @@ export function DomicertReport({ data }: { data: ReportData }) {
                     ))}
                   </View>
                 )}
-              
               </View>
             </View>
           </View>
