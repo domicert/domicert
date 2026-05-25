@@ -611,32 +611,7 @@ export function DomicertReport({ data }: { data: ReportData }) {
                     ))}
                   </View>
                 )}
-              </View>
-            </View>
-          </View>
-                  )
-                })}
-                {section.notes ? (
-                  <View style={{ marginTop: 10, padding: 8, backgroundColor: colors.lightGray, borderRadius: 4 }}>
-                    <Text style={{ fontSize: 8, color: colors.gray, marginBottom: 3, fontFamily: 'Helvetica-Bold' }}>
-                      Inspector notes:
-                    </Text>
-                    <Text style={{ fontSize: 9, color: colors.black }}>{section.notes}</Text>
-                  </View>
-                ) : null}
-
-                {section.photos && section.photos.length > 0 && (
-                  <View style={styles.photoGrid}>
-                    {section.photos.map((photo, idx) => (
-                      <View key={idx} style={styles.photoBlock}>
-                        <Image src={photo.src} style={styles.photoImage} />
-                        {photo.caption && (
-                          <Text style={styles.photoCaption}>{photo.caption}</Text>
-                        )}
-                      </View>
-                    ))}
-                  </View>
-                )}
+              
               </View>
             </View>
           </View>
