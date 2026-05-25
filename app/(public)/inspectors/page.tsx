@@ -313,22 +313,22 @@ export default function InspectorDirectoryPage() {
 
                   <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
                     {inspector.email && (
-                      
+                      <Link
                         href={'mailto:' + inspector.email}
                         className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 text-center transition-colors"
                       >
                         Email
-                      </a>
+                      </Link>
                     )}
                     {inspector.website_url && (
-                      
+                      <Link
                         href={inspector.website_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 text-center transition-colors"
                       >
                         Website
-                      </a>
+                      </Link>
                     )}
                     <div className="flex-1 py-1.5 bg-[#1D9E75] rounded-lg text-xs text-white text-center">
                       View profile
