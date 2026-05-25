@@ -1132,10 +1132,16 @@ const getTierLimit = () => {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="font-medium text-gray-900 mb-4">Send report to client</h2>
               <div className="mb-3">
-                <label className="block text-xs text-gray-500 mb-1">Client email</label>
-                <input type="email" defaultValue={property.clientEmail}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900" />
-              </div>
+  <label className="block text-xs text-gray-500 mb-1">Client email</label>
+  <input 
+    type="email" 
+    value={property.clientEmail}
+    onChange={e => {
+      updateProp('clientEmail', e.target.value)
+      setEmailConfirmed(false)
+    }}
+    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900" />
+</div>
               <div className="mb-4">
                 <label className="block text-xs text-gray-500 mb-1">Personal message (optional)</label>
                 <textarea rows={3} placeholder="Hi, please find your inspection report attached..."
