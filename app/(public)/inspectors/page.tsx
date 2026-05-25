@@ -26,7 +26,7 @@ interface Company {
   province_state: string
   accent_color: string
   inspection_count: number
-  created_at: string
+  updated_at: string
   inspector_badges: Badge[]
 }
 
@@ -55,7 +55,7 @@ export default async function InspectorDirectoryPage() {
       province_state,
       accent_color,
       inspection_count,
-      created_at
+     updated_at
     `)
     .eq('profile_public', true)
     .order('inspection_count', { ascending: false })
@@ -146,9 +146,9 @@ export default async function InspectorDirectoryPage() {
                             {inspector.license_number}
                           </span>
                         )}
-                        {inspector.created_at && (
+                       {inspector.updated_at && (
                           <span className="px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-full text-xs text-gray-600">
-                            Since {new Date(inspector.created_at).getFullYear()}
+                            Since {new Date(inspector.updated_at).getFullYear()}
                           </span>
                         )}
                       </div>
