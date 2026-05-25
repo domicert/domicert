@@ -356,6 +356,7 @@ interface ReportData {
     licenseNumber: string
     email: string
     phone: string
+    logoSrc?: string
   }
   inspection: {
     date: string
@@ -396,6 +397,12 @@ export function DomicertReport({ data }: { data: ReportData }) {
         <View style={styles.cover}>
           <View style={styles.coverTop}>
             <View style={styles.coverLogoArea}>
+              {data.inspector.logoSrc && (
+                <Image
+                  src={data.inspector.logoSrc}
+                  style={{ width: 48, height: 48, borderRadius: 6, marginRight: 10 }}
+                />
+              )}
               <View>
                 <Text style={styles.coverCompanyName}>{data.inspector.companyName}</Text>
                 <Text style={styles.coverCompanyDetails}>

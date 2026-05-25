@@ -251,7 +251,20 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         }[]
       }
     }
-
+// Fetch company logo as base64
+    let logoSrc: string | undefined
+    if (company?.logo_storage_path) {
+      try {
+        const { data: signedLogo } = await supabase.storage
+          .from('company-assets')
+          .createSignedUrl(company.logo_storage_path, 120)
+        if (signedLogo?.signedUrl) {
+          logoSrc = await toBase64DataUri(signedLogo.signedUrl)
+        }
+      } catch {
+        console.log('Logo fetch failed — continuing without logo')
+      }
+    }
     // 9. Generate PDF
     const reportData = {
       property: {
@@ -277,7 +290,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         name: property.clientName,
         email: property.clientEmail,
       },
-      inspector: {
+     inspector: {
         name: user.user_metadata?.first_name
           ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
           : user.email || 'Inspector',
@@ -285,6 +298,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         licenseNumber: company?.license_number || 'N/A',
         email: company?.email || user.email || '',
         phone: company?.phone || '',
+        logoSrc,
       },
       inspection: {
         date: property.inspectionDate,
