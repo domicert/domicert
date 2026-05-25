@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 interface Badge {
   badge_code: string
   badge_definitions: {
@@ -34,7 +34,10 @@ const badgeColors: Record<string, { bg: string, border: string, text: string }> 
 }
 
 export default async function InspectorDirectoryPage() {
-  const supabase = await createClient()
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
  const { data: companies, error: companiesError } = await supabase
     .from('companies')
