@@ -141,7 +141,38 @@ export default function NewInspectionPage() {
     hasCentralAc: false, hasForcedAir: false,
     hasWoodFireplace: false, hasGasFireplace: false, hasSumpPump: false,
   })
+// Auto-save draft to localStorage
+  useEffect(() => {
+    if (step === 1 && !property.address) return // Don't save empty state
+    const draft = {
+      step,
+      selectedTier,
+      property,
+      config,
+      sections,
+    }
+    localStorage.setItem('domicert_inspection_draft', JSON.stringify(draft))
+  }, [step, selectedTier, property, config, sections])
 
+  // Restore draft on page load
+  useEffect(() => {
+    const saved = localStorage.getItem('domicert_inspection_draft')
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved)
+        if (draft.property?.address) {
+          setDraftRestored(true)
+          setStep(draft.step || 1)
+          setSelectedTier(draft.selectedTier || 'pro')
+          setProperty(draft.property)
+          setConfig(draft.config)
+          if (draft.sections?.length > 0) setSections(draft.sections)
+        }
+      } catch {
+        localStorage.removeItem('domicert_inspection_draft')
+      }
+    }
+  }, [])
   const buildSections = (): Section[] => {
     const sections: Section[] = [
       { id: 'exterior', type: 'exterior', label: 'Exterior', enabled: true, notes: '', items: CHECKLIST.exterior.map(i => ({
@@ -340,7 +371,7 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
   const [submitted, setSubmitted] = useState(false)
   const [webLink, setWebLink] = useState<string | null>(null)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
-
+const [draftRestored, setDraftRestored] = useState(false)
 const getTierLimit = () => {
     switch (selectedTier) {
       case 'text': return 0
@@ -436,6 +467,7 @@ const getTierLimit = () => {
       if (!response.ok) throw new Error(result.error || 'Submission failed')
       setWebLink(result.webLink)
       setSubmitted(true)
+      localStorage.removeItem('domicert_inspection_draft')
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -523,6 +555,31 @@ const getTierLimit = () => {
         {/* STEP 1 — Property & client */}
         {step === 1 && (
           <div className="space-y-6">
+            {draftRestored && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600">↩</span>
+                  <span className="text-sm text-blue-700">Draft restored — your previous work has been recovered</span>
+                </div>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('domicert_inspection_draft')
+                    setDraftRestored(false)
+                    setStep(1)
+                    setProperty({
+                      address: '', city: '', provinceState: 'ON', postalZip: '',
+                      country: 'CA', yearBuilt: '', propertyType: 'single_family',
+                      clientName: '', clientEmail: '', clientPhone: '',
+                      inspectionFee: '', inspectionDate: '',
+                    })
+                    setSections([])
+                  }}
+                  className="text-xs text-blue-500 hover:text-blue-700 underline"
+                >
+                  Start fresh instead
+                </button>
+              </div>
+            )}
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {error}
