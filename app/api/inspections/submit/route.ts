@@ -199,12 +199,10 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
             const photo = (photos as { path: string; caption: string }[])[i]
             const storagePath = photo.path
             console.log('Using photo path:', storagePath)
-            await supabase.from('photos').insert({
-              inspection_id: inspection.id,
+          await supabase.from('photos').insert({
               section_id: dbSectionId,
-              storage_path: storagePath,
-              caption: photo.caption || null,
-              sort_order: i,
+              storage_path_fullres: storagePath,
+              uploaded_at: new Date().toISOString(),
             })
             sectionPhotoMap[dbSectionId].push({
               storagePath: storagePath,
