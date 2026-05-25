@@ -230,9 +230,11 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
         const base64Photos = await Promise.all(
           photos.map(async (photo) => {
             const cleanPath = photo.storagePath.replace(/^photos\//, '')
-            const { data: signedData } = await supabase.storage
+            console.log('Creating signed URL for:', cleanPath)
+            const { data: signedData, error: signedError } = await supabase.storage
               .from('photos')
               .createSignedUrl(cleanPath, 120)
+            console.log('Signed URL result:', { url: !!signedData?.signedUrl, error: signedError?.message })
 
             if (!signedData?.signedUrl) return null
 console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.storagePath)
