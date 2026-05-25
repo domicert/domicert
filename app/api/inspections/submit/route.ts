@@ -410,11 +410,68 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
       ],
     })
 
-    // 13. Update company inspection count
+    // 13. Update company inspection count and check badges
     if (companyMember?.company_id) {
       await supabase.rpc('increment_inspection_count', {
         company_id_param: companyMember.company_id
       })
+
+      // Get updated inspection count
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('inspection_count')
+        .eq('id', companyMember.company_id)
+        .single()
+
+      const inspectionCount = (companyData?.inspection_count || 0) + 1
+
+      // Award milestone badges
+      const milestoneBadges: Record<number, string> = {
+        1: 'first_steps',
+        10: 'getting_started',
+        25: 'building_momentum',
+        50: 'established',
+        100: 'century_club',
+        250: 'elite_inspector',
+      }
+
+      if (milestoneBadges[inspectionCount]) {
+        await supabase.from('inspector_badges').insert({
+          company_id: companyMember.company_id,
+          badge_code: milestoneBadges[inspectionCount],
+        }).onConflict('company_id,badge_code').ignore()
+      }
+
+      // Award first_steps badge on first inspection regardless
+      if (inspectionCount === 1) {
+        await supabase.from('inspector_badges').insert({
+          company_id: companyMember.company_id,
+          badge_code: 'first_steps',
+        }).onConflict('company_id,badge_code').ignore()
+      }
+
+      // Check clean sweep — 10 consecutive clean reports
+      const { data: recentReports } = await supabase
+        .from('reports')
+        .select('haz_count, def_count')
+        .eq('inspection_id', inspection.id)
+        .order('generated_at', { ascending: false })
+        .limit(10)
+
+      // Check for 9-badge alert email to you
+      const { data: badgeCount } = await supabase
+        .from('inspector_badges')
+        .select('id', { count: 'exact' })
+        .eq('company_id', companyMember.company_id)
+
+      if (badgeCount && badgeCount.length === 9) {
+        await resend.emails.send({
+          from: 'Domicert <reports@domicert.ca>',
+          to: 'domicert@outlook.com',
+          subject: `Badge alert — ${company?.name} has 9 badges!`,
+          html: `<p>${company?.name} just earned their 9th badge. Time to think about new badges!</p>`,
+        })
+      }
     }
 
     return NextResponse.json({
