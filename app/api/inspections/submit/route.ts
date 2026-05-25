@@ -188,7 +188,7 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
           .from('inspection_sections')
           .select('id')
           .eq('inspection_id', inspection.id)
-          .eq('section_label', tempSectionId)
+          .ilike('section_label', tempSectionId)
           .single()
 
         if (matchingSection.data) {
