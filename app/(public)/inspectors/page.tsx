@@ -1,9 +1,6 @@
-'use client'
-
-import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 
 interface Badge {
   badge_code: string
@@ -11,12 +8,11 @@ interface Badge {
     name: string
     icon: string
     color: string
-    category: string
     sort_order: number
-  }
+  } | null
 }
 
-interface Inspector {
+interface Company {
   id: string
   name: string
   email: string
@@ -26,14 +22,9 @@ interface Inspector {
   city: string
   province_state: string
   accent_color: string
-  logo_storage_path: string | null
   inspection_count: number
-  profile_public: boolean
   created_at: string
   inspector_badges: Badge[]
-  avg_rating: number
-  review_count: number
-  is_verified: boolean
 }
 
 const badgeColors: Record<string, { bg: string, border: string, text: string }> = {
@@ -42,117 +33,40 @@ const badgeColors: Record<string, { bg: string, border: string, text: string }> 
   blue: { bg: '#E6F1FB', border: '#185FA5', text: '#0C447C' },
 }
 
-export default function InspectorDirectoryPage() {
-  const [inspectors, setInspectors] = useState<Inspector[]>([])
-  const [filtered, setFiltered] = useState<Inspector[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [province, setProvince] = useState('')
-  const supabase = createClient()
+export default async function InspectorDirectoryPage() {
+  const supabase = await createClient()
 
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from('companies')
-        .select(`
-          id,
+  const { data: companies } = await supabase
+    .from('companies')
+    .select(`
+      id,
+      name,
+      email,
+      phone,
+      license_number,
+      website_url,
+      city,
+      province_state,
+      accent_color,
+      inspection_count,
+      created_at,
+      inspector_badges (
+        badge_code,
+        badge_definitions (
           name,
-          email,
-          phone,
-          license_number,
-          website_url,
-          city,
-          province_state,
-          accent_color,
-          logo_storage_path,
-          inspection_count,
-          profile_public,
-          created_at,
-          inspector_badges (
-            badge_code,
-            badge_definitions (
-              name,
-              icon,
-              color,
-              category,
-              sort_order
-            )
-          )
-        `)
-        .eq('profile_public', true)
-        .order('inspection_count', { ascending: false })
-
-      if (data) {
-        const enriched = await Promise.all(data.map(async (company) => {
-          const { data: surveys } = await supabase
-            .from('surveys')
-            .select('inspector_rating')
-            .not('inspector_rating', 'is', null)
-            .eq('inspection_id', supabase
-              .from('inspections')
-              .select('id')
-              .eq('company_id', company.id)
-            )
-
-          const ratings = surveys?.map(s => s.inspector_rating).filter(Boolean) || []
-          const avg = ratings.length > 0
-            ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
-            : 0
-
-         const hasVerified = company.inspector_badges?.some(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (b: any) => b.badge_code === 'verified_pro'
-          )
-
-          return {
-            ...company,
-            avg_rating: Math.round(avg * 10) / 10,
-            review_count: ratings.length,
-            is_verified: hasVerified,
-          }
-        }))
-
-        setInspectors(enriched as unknown as Inspector[])
-        setFiltered(enriched as unknown as Inspector[])
-      }
-      setLoading(false)
-    }
-    load()
-  }, [])
-
-  useEffect(() => {
-    let results = inspectors
-    if (search) {
-      const q = search.toLowerCase()
-      results = results.filter(i =>
-        i.name?.toLowerCase().includes(q) ||
-        i.city?.toLowerCase().includes(q) ||
-        i.province_state?.toLowerCase().includes(q)
+          icon,
+          color,
+          sort_order
+        )
       )
-    }
-    if (province) {
-      results = results.filter(i => i.province_state === province)
-    }
-    setFiltered(results)
-  }, [search, province, inspectors])
+    `)
+    .eq('profile_public', true)
+    .order('inspection_count', { ascending: false })
 
-  const renderStars = (rating: number) => {
-    const full = Math.floor(rating)
-    const half = rating % 1 >= 0.5
-    const empty = 5 - full - (half ? 1 : 0)
-    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty)
-  }
+  const inspectors = (companies || []) as unknown as Company[]
 
   const getInitials = (name: string) => {
     return name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'DC'
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Loading inspectors...</div>
-      </div>
-    )
   }
 
   return (
@@ -179,77 +93,24 @@ export default function InspectorDirectoryPage() {
           <p className="text-gray-500">Certified inspectors across Canada, powered by Domicert</p>
         </div>
 
-        <div className="flex gap-3 mb-6">
-          <input
-            type="text"
-            placeholder="Search by city, name, or province..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400 bg-white"
-          />
-          <select
-            value={province}
-            onChange={e => setProvince(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 bg-white"
-          >
-            <option value="">All provinces</option>
-            <option value="AB">Alberta</option>
-            <option value="BC">British Columbia</option>
-            <option value="MB">Manitoba</option>
-            <option value="NB">New Brunswick</option>
-            <option value="NL">Newfoundland</option>
-            <option value="NS">Nova Scotia</option>
-            <option value="ON">Ontario</option>
-            <option value="PE">PEI</option>
-            <option value="QC">Quebec</option>
-            <option value="SK">Saskatchewan</option>
-            <optgroup label="United States">
-              <option value="AL">Alabama</option>
-              <option value="AK">Alaska</option>
-              <option value="AZ">Arizona</option>
-              <option value="CA">California</option>
-              <option value="CO">Colorado</option>
-              <option value="CT">Connecticut</option>
-              <option value="FL">Florida</option>
-              <option value="GA">Georgia</option>
-              <option value="IL">Illinois</option>
-              <option value="IN">Indiana</option>
-              <option value="MA">Massachusetts</option>
-              <option value="MI">Michigan</option>
-              <option value="MN">Minnesota</option>
-              <option value="MO">Missouri</option>
-              <option value="NJ">New Jersey</option>
-              <option value="NY">New York</option>
-              <option value="NC">North Carolina</option>
-              <option value="OH">Ohio</option>
-              <option value="OR">Oregon</option>
-              <option value="PA">Pennsylvania</option>
-              <option value="TN">Tennessee</option>
-              <option value="TX">Texas</option>
-              <option value="VA">Virginia</option>
-              <option value="WA">Washington</option>
-              <option value="WI">Wisconsin</option>
-            </optgroup>
-          </select>
-        </div>
-
         <p className="text-sm text-gray-500 mb-6">
-          {filtered.length} inspector{filtered.length !== 1 ? 's' : ''} found
-          {province ? ` in ${province}` : ''}
-          {search ? ` matching "${search}"` : ''}
+          {inspectors.length} inspector{inspectors.length !== 1 ? 's' : ''} found
         </p>
 
-        {filtered.length === 0 ? (
+        {inspectors.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-4xl mb-4">🔍</div>
-            <p className="text-gray-500">No inspectors found matching your search.</p>
+            <p className="text-gray-500">No inspectors found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(inspector => {
-              const badges = inspector.inspector_badges
-                ?.sort((a, b) => (b.badge_definitions?.sort_order || 0) - (a.badge_definitions?.sort_order || 0))
-                .slice(0, 4) || []
+            {inspectors.map(inspector => {
+              const badges = (inspector.inspector_badges || [])
+                .filter(b => b.badge_definitions)
+                .sort((a, b) => (b.badge_definitions?.sort_order || 0) - (a.badge_definitions?.sort_order || 0))
+                .slice(0, 4)
+
+              const isVerified = inspector.inspector_badges?.some(b => b.badge_code === 'verified_pro')
 
               return (
                 <div key={inspector.id} className="bg-white rounded-xl border border-gray-200 p-5">
@@ -264,20 +125,16 @@ export default function InspectorDirectoryPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-sm font-medium text-gray-900 truncate">{inspector.name}</span>
-                            {inspector.is_verified && (
-                              <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-xs rounded-full flex-shrink-0">
-                                ✓ Verified
+                            <span className="text-sm font-medium text-gray-900">{inspector.name}</span>
+                            {isVerified && (
+                              <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-xs rounded-full">
+                                Verified
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            📍 {inspector.city}, {inspector.province_state}
-                          </div>
-                          {inspector.review_count > 0 && (
-                            <div className="text-xs mt-0.5">
-                              <span className="text-yellow-500">{renderStars(inspector.avg_rating)}</span>
-                              <span className="text-gray-400 ml-1">{inspector.avg_rating} ({inspector.review_count})</span>
+                          {(inspector.city || inspector.province_state) && (
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {inspector.city}{inspector.city && inspector.province_state ? ', ' : ''}{inspector.province_state}
                             </div>
                           )}
                         </div>
@@ -309,7 +166,7 @@ export default function InspectorDirectoryPage() {
                             return (
                               <div
                                 key={idx}
-                                title={badge.badge_definitions?.name}
+                                title={badge.badge_definitions?.name || ''}
                                 className="relative flex items-center justify-center"
                                 style={{ width: 28, height: 28 }}
                               >
@@ -322,7 +179,7 @@ export default function InspectorDirectoryPage() {
                                   />
                                 </svg>
                                 <i
-                                  className={`ti ${badge.badge_definitions?.icon}`}
+                                  className={'ti ' + badge.badge_definitions?.icon}
                                   style={{ fontSize: 11, color: colors.text, position: 'relative', zIndex: 1 }}
                                   aria-hidden="true"
                                 />
