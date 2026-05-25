@@ -99,8 +99,9 @@ export default function InspectorDirectoryPage() {
             ? ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length
             : 0
 
-          const hasVerified = company.inspector_badges?.some(
-            (b: Badge) => b.badge_code === 'verified_pro'
+         const hasVerified = company.inspector_badges?.some(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (b: any) => b.badge_code === 'verified_pro'
           )
 
           return {
