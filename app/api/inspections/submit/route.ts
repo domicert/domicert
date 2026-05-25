@@ -436,18 +436,33 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
       }
 
       if (milestoneBadges[inspectionCount]) {
-        await supabase.from('inspector_badges').insert({
-          company_id: companyMember.company_id,
-          badge_code: milestoneBadges[inspectionCount],
-        }).onConflict('company_id,badge_code').ignore()
+        const { data: existingBadge } = await supabase
+          .from('inspector_badges')
+          .select('id')
+          .eq('company_id', companyMember.company_id)
+          .eq('badge_code', milestoneBadges[inspectionCount])
+          .single()
+        if (!existingBadge) {
+          await supabase.from('inspector_badges').insert({
+            company_id: companyMember.company_id,
+            badge_code: milestoneBadges[inspectionCount],
+          })
+        }
       }
 
-      // Award first_steps badge on first inspection regardless
       if (inspectionCount === 1) {
-        await supabase.from('inspector_badges').insert({
-          company_id: companyMember.company_id,
-          badge_code: 'first_steps',
-        }).onConflict('company_id,badge_code').ignore()
+        const { data: existingFirst } = await supabase
+          .from('inspector_badges')
+          .select('id')
+          .eq('company_id', companyMember.company_id)
+          .eq('badge_code', 'first_steps')
+          .single()
+        if (!existingFirst) {
+          await supabase.from('inspector_badges').insert({
+            company_id: companyMember.company_id,
+            badge_code: 'first_steps',
+          })
+        }
       }
 
       // Check clean sweep — 10 consecutive clean reports
