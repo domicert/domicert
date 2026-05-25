@@ -141,38 +141,7 @@ export default function NewInspectionPage() {
     hasCentralAc: false, hasForcedAir: false,
     hasWoodFireplace: false, hasGasFireplace: false, hasSumpPump: false,
   })
-// Auto-save draft to localStorage
-  useEffect(() => {
-    if (step === 1 && !property.address) return // Don't save empty state
-    const draft = {
-      step,
-      selectedTier,
-      property,
-      config,
-      sections,
-    }
-    localStorage.setItem('domicert_inspection_draft', JSON.stringify(draft))
-  }, [step, selectedTier, property, config, sections])
 
-  // Restore draft on page load
-  useEffect(() => {
-    const saved = localStorage.getItem('domicert_inspection_draft')
-    if (saved) {
-      try {
-        const draft = JSON.parse(saved)
-        if (draft.property?.address) {
-          setDraftRestored(true)
-          setStep(draft.step || 1)
-          setSelectedTier(draft.selectedTier || 'pro')
-          setProperty(draft.property)
-          setConfig(draft.config)
-          if (draft.sections?.length > 0) setSections(draft.sections)
-        }
-      } catch {
-        localStorage.removeItem('domicert_inspection_draft')
-      }
-    }
-  }, [])
   const buildSections = (): Section[] => {
     const sections: Section[] = [
       { id: 'exterior', type: 'exterior', label: 'Exterior', enabled: true, notes: '', items: CHECKLIST.exterior.map(i => ({
@@ -372,7 +341,41 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
   const [webLink, setWebLink] = useState<string | null>(null)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
 const [draftRestored, setDraftRestored] = useState(false)
-const getTierLimit = () => {
+
+  // Auto-save draft to localStorage
+  useEffect(() => {
+    if (step === 1 && !property.address) return
+    const draft = {
+      step,
+      selectedTier,
+      property,
+      config,
+      sections,
+    }
+    localStorage.setItem('domicert_inspection_draft', JSON.stringify(draft))
+  }, [step, selectedTier, property, config, sections])
+
+  // Restore draft on page load
+  useEffect(() => {
+    const saved = localStorage.getItem('domicert_inspection_draft')
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved)
+        if (draft.property?.address) {
+          setDraftRestored(true)
+          setStep(draft.step || 1)
+          setSelectedTier(draft.selectedTier || 'pro')
+          setProperty(draft.property)
+          setConfig(draft.config)
+          if (draft.sections?.length > 0) setSections(draft.sections)
+        }
+      } catch {
+        localStorage.removeItem('domicert_inspection_draft')
+      }
+    }
+  }, [])
+
+  const getTierLimit = () => {
     switch (selectedTier) {
       case 'text': return 0
       case 'basic': return 5
