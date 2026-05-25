@@ -343,4 +343,12 @@ export default function InspectorDirectoryPage() {
                     <div className="flex-1 py-1.5 bg-[#1D9E75] rounded-lg text-xs text-white text-center">
                       View profile
                     </div>
-                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
