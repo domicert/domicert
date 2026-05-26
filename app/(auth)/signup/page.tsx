@@ -12,6 +12,8 @@ export default function SignupPage() {
   const [step, setStep] = useState(1)
   const [accountType, setAccountType] = useState<AccountType>(null)
   const [loading, setLoading] = useState(false)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
@@ -120,7 +122,20 @@ export default function SignupPage() {
         })
 
       if (memberError) throw new Error(`Member error: ${memberError.message}`)
-
+// Upload logo if provided
+      if (logoFile && company?.id) {
+        const ext = logoFile.name.split('.').pop()
+        const logoPath = `logos/${company.id}/logo.${ext}`
+        const supabaseClient = createClient()
+        await supabaseClient.storage
+          .from('company-assets')
+          .upload(logoPath, logoFile, { upsert: true })
+        
+        await supabaseClient
+          .from('companies')
+          .update({ logo_storage_path: logoPath })
+          .eq('id', company.id)
+      }
       // Send verification notification to admin
       const regInfo = REGULATORY_DATA[formData.provinceState]
       const regulatorHtml = regInfo?.licenseRequired
@@ -500,21 +515,32 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* STEP 3 — Branding */}
-        {step === 3 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h1 className="text-xl font-medium text-gray-900 mb-1">Logo &amp; branding</h1>
-            <p className="text-sm text-gray-500 mb-6">Your logo appears on every report sent to clients</p>
-
-            {/* Logo upload */}
-            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center mb-4 cursor-pointer hover:border-[#1D9E75] transition-colors">
+        {/* Logo upload */}
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center mb-4 hover:border-[#1D9E75] transition-colors">
               <div className="text-3xl mb-2">📷</div>
+              {logoPreview ? (
+                <div className="mb-3">
+                  <img src={logoPreview} alt="Logo preview" className="w-20 h-20 object-contain mx-auto rounded-lg border border-gray-200" />
+                </div>
+              ) : null}
               <div className="text-sm font-medium text-gray-700">Upload your company logo</div>
               <div className="text-xs text-gray-400 mt-1">PNG or JPG, max 5MB</div>
               <div className="text-xs text-gray-400 mt-1">A default logo will be generated if you skip this</div>
-              <button className="mt-3 px-4 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50">
-                Choose file
-              </button>
+              <label className="mt-3 px-4 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer inline-block">
+                {logoFile ? logoFile.name : 'Choose file'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      setLogoFile(file)
+                      setLogoPreview(URL.createObjectURL(file))
+                    }
+                  }}
+                />
+              </label>
             </div>
 
             {/* Accent color */}
