@@ -123,6 +123,7 @@ export default function SignupPage() {
 
       if (memberError) throw new Error(`Member error: ${memberError.message}`)
 // Upload logo if provided
+      console.log('Logo file:', logoFile?.name, 'Company ID:', company?.id)
       if (logoFile && company?.id) {
         const ext = logoFile.name.split('.').pop()
         const logoPath = `logos/${company.id}/logo.${ext}`
