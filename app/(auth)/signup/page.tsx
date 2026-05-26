@@ -129,7 +129,7 @@ export default function SignupPage() {
         : `<p><strong>No mandatory licensing</strong> in ${regInfo?.region || formData.provinceState}.</p>
            <p>Please manually review their business name, website, and professional background.</p>`
 
-      await fetch('/api/admin/verify-inspector', {
+      await fetch(`${window.location.origin}/api/admin/verify-inspector`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
