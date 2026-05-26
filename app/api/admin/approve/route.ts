@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
   if (!company) {
     return new NextResponse('Company not found', { status: 404 })
   }
-
+  console.log('Company found:', company.name, 'email:', company.email)
+console.log('Company found:', company.name, 'email:', company.email)
   if (action === 'approve') {
     await supabase
       .from('companies')
@@ -39,9 +40,10 @@ export async function GET(request: NextRequest) {
       .eq('id', companyId)
 
     // Email the inspector
-    await resend.emails.send({
-      from: 'Domicert <reports@domicert.ca>',
-      to: company.email,
+    try {
+      await resend.emails.send({
+        from: 'Domicert <reports@domicert.ca>',
+        to: company.email || 'domicert@outlook.com',
       subject: 'Your Domicert account has been verified!',
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
@@ -60,7 +62,9 @@ export async function GET(request: NextRequest) {
         </div>
       `,
     })
-
+} catch (emailErr) {
+      console.error('Email send error:', emailErr)
+    }
     return new NextResponse(`
       <html><body style="font-family: sans-serif; padding: 40px; text-align: center;">
         <h1 style="color: #1D9E75;">✓ Inspector approved</h1>
