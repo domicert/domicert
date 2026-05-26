@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getRegulatoryInfo, REGULATORY_DATA } from '@/lib/regulatory'
 
 type AccountType = 'inspector' | 'realtor' | null
 
@@ -100,6 +101,7 @@ export default function SignupPage() {
           is_solo_operator: !formData.hasteam,
           profile_public: true,
           inspection_count: 0,
+          verification_status: 'pending',
         })
         .select()
         .single()
@@ -118,6 +120,30 @@ export default function SignupPage() {
         })
 
       if (memberError) throw new Error(`Member error: ${memberError.message}`)
+
+      // Send verification notification to admin
+      const regInfo = REGULATORY_DATA[formData.provinceState]
+      const regulatorHtml = regInfo?.licenseRequired
+        ? `<p><strong>Regulator:</strong> ${regInfo.regulatorName}</p>
+           <p><strong>Verify at:</strong> <a href="${regInfo.regulatorUrl}">${regInfo.regulatorUrl}</a></p>`
+        : `<p><strong>No mandatory licensing</strong> in ${regInfo?.region || formData.provinceState}.</p>
+           <p>Please manually review their business name, website, and professional background.</p>`
+
+      await fetch('/api/admin/verify-inspector', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: company.id,
+          inspectorName: `${formData.firstName} ${formData.lastName}`,
+          companyName: formData.companyName,
+          email: formData.email,
+          phone: formData.companyPhone,
+          website: formData.website,
+          provinceState: formData.provinceState,
+          licenseNumber: formData.licenseNumber,
+          regulatorHtml,
+        }),
+      })
 
       // 4. Send team invites if needed
       if (formData.hasteam && formData.teamEmails) {
@@ -331,14 +357,33 @@ export default function SignupPage() {
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">License / certification #</label>
-                <input
-                  type="text"
-                  value={formData.licenseNumber}
-                  onChange={e => update('licenseNumber', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
-                  placeholder="OCHI-12345"
-                />
+                {(() => {
+                  const regInfo = getRegulatoryInfo(formData.provinceState)
+                  return (
+                    <>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {regInfo?.licenseLabel || 'License / certification #'}
+                      </label>
+                      {regInfo?.regulatorName && (
+                        <p className="text-xs text-blue-600 mb-1">
+                          <a href={regInfo.regulatorUrl || '#'} target="_blank" rel="noopener noreferrer" className="underline">{regInfo.regulatorName}</a>
+                        </p>
+                      )}
+                      {formData.provinceState && !regInfo?.licenseRequired && (
+                        <p className="text-xs text-gray-400 mb-1">
+                          Not required in {regInfo?.region || formData.provinceState}
+                        </p>
+                      )}
+                      <input
+                        type="text"
+                        value={formData.licenseNumber}
+                        onChange={e => update('licenseNumber', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#1D9E75] text-gray-900 placeholder-gray-400"
+                        placeholder={regInfo?.licenseRequired ? 'Required' : 'Optional'}
+                      />
+                    </>
+                  )
+                })()}
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Website (optional)</label>
@@ -350,6 +395,9 @@ export default function SignupPage() {
                   placeholder="https://yoursite.com"
                 />
               </div>
+            </div>
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 mb-3">
+              ⚠️ By creating an account you confirm that the information provided is accurate. False or misleading information is grounds for immediate account termination and may result in legal action.
             </div>
             <div className="mb-3">
               <label className="block text-xs text-gray-500 mb-1">Street address</label>

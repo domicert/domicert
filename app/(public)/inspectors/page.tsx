@@ -27,6 +27,7 @@ export default async function InspectorDirectoryPage() {
       license_number
     `)
     .eq('profile_public', true)
+    .eq('verification_status', 'verified')
     .order('inspection_count', { ascending: false })
 
   const inspectors = (companies || []).map(c => ({ ...c, inspector_badges: [] }))
