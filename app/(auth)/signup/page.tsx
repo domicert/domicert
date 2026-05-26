@@ -515,7 +515,13 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* Logo upload */}
+        {/* STEP 3 — Branding */}
+        {step === 3 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h1 className="text-xl font-medium text-gray-900 mb-1">Logo &amp; branding</h1>
+            <p className="text-sm text-gray-500 mb-6">Your logo appears on every report sent to clients</p>
+
+            {/* Logo upload */}
             <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center mb-4 hover:border-[#1D9E75] transition-colors">
               <div className="text-3xl mb-2">📷</div>
               {logoPreview ? (
