@@ -62,8 +62,74 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .single()
 
-        if (memberData?.companies) {
-          const companyData = memberData.companies as unknown as Company & { 
+        if (!memberData?.companies) {
+          // Company doesn't exist yet — create it from user metadata
+          const meta = user.user_metadata
+          const { data: newCompany } = await supabase
+            .from('companies')
+            .insert({
+              owner_user_id: user.id,
+              name: meta?.company_name || 'My Company',
+              email: meta?.company_email || user.email,
+              phone: meta?.company_phone || null,
+              license_number: meta?.license_number || null,
+              website_url: meta?.website_url || null,
+              address_line1: meta?.address_line1 || null,
+              city: meta?.city || null,
+              province_state: meta?.province_state || null,
+              postal_zip: meta?.postal_zip || null,
+              country: meta?.country || 'CA',
+              accent_color: meta?.accent_color || '#1D9E75',
+              default_disclaimer: meta?.disclaimer || null,
+              verification_status: 'pending',
+              inspection_count: 0,
+              profile_public: true,
+              is_solo_operator: true,
+              is_auto_created: false,
+            })
+            .select()
+            .single()
+
+          if (newCompany) {
+            await supabase
+              .from('company_members')
+              .insert({
+                company_id: newCompany.id,
+                user_id: user.id,
+                role: 'owner',
+                invite_accepted_at: new Date().toISOString(),
+                is_active: true,
+              })
+            setCompany(newCompany as unknown as Company)
+
+            // Send verification notification
+            await fetch(`${window.location.origin}/api/admin/verify-inspector`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                companyId: newCompany.id,
+                inspectorName: meta?.first_name
+                  ? `${meta.first_name} ${meta.last_name || ''}`.trim()
+                  : user.email,
+                companyName: newCompany.name,
+                email: newCompany.email || user.email,
+                phone: newCompany.phone || 'Not provided',
+                website: newCompany.website_url || 'Not provided',
+                provinceState: newCompany.province_state || 'Not provided',
+                licenseNumber: newCompany.license_number || 'Not provided',
+                regulatorHtml: newCompany.license_number
+                  ? `<p>License number provided: <strong>${newCompany.license_number}</strong></p>`
+                  : `<p>No license number provided.</p>`,
+              }),
+            })
+
+            await supabase
+              .from('companies')
+              .update({ verification_notified_at: new Date().toISOString() })
+              .eq('id', newCompany.id)
+          }
+        } else {
+          const companyData = memberData.companies as unknown as Company & {
             id: string
             verification_notified_at: string | null
             verification_status: string
@@ -97,7 +163,6 @@ export default function DashboardPage() {
               }),
             })
 
-            // Mark as notified
             await supabase
               .from('companies')
               .update({ verification_notified_at: new Date().toISOString() })
