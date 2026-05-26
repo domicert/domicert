@@ -58,12 +58,51 @@ export default function DashboardPage() {
         // Get company
         const { data: memberData } = await supabase
           .from('company_members')
-          .select('company_id, companies(name, inspection_count)')
+          .select('company_id, companies(id, name, inspection_count, verification_status, verification_notified_at, license_number, phone, email, website_url, province_state)')
           .eq('user_id', user.id)
           .single()
 
         if (memberData?.companies) {
-          setCompany(memberData.companies as unknown as Company)
+          const companyData = memberData.companies as unknown as Company & { 
+            id: string
+            verification_notified_at: string | null
+            verification_status: string
+            license_number: string
+            phone: string
+            email: string
+            website_url: string
+            province_state: string
+          }
+          setCompany(companyData)
+
+          // Send verification notification if not yet sent
+          if (companyData && !companyData.verification_notified_at) {
+            await fetch(`${window.location.origin}/api/admin/verify-inspector`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                companyId: memberData.company_id,
+                inspectorName: user.user_metadata?.first_name
+                  ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+                  : user.email,
+                companyName: companyData.name,
+                email: companyData.email || user.email,
+                phone: companyData.phone || 'Not provided',
+                website: companyData.website_url || 'Not provided',
+                provinceState: companyData.province_state || 'Not provided',
+                licenseNumber: companyData.license_number || 'Not provided',
+                regulatorHtml: companyData.license_number
+                  ? `<p>License number provided: <strong>${companyData.license_number}</strong></p>`
+                  : `<p>No license number provided.</p>`,
+              }),
+            })
+
+            // Mark as notified
+            await supabase
+              .from('companies')
+              .update({ verification_notified_at: new Date().toISOString() })
+              .eq('id', memberData.company_id)
+          }
         }
 
         // Get inspections with property and report data
