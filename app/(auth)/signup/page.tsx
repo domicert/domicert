@@ -14,6 +14,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [tempLogoPath, setTempLogoPath] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
@@ -123,8 +124,7 @@ export default function SignupPage() {
       if (companyError) throw new Error(`Company error: ${companyError.message}`)
 
       // 3. Create company member record linking user to company
-      const [tempLogoPath, setTempLogoPath] = useState<string | null>(null)
-      const { error: memberError } = await supabase
+        const { error: memberError } = await supabase
         .from('company_members')
         .insert({
           company_id: company.id,
