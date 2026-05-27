@@ -15,7 +15,9 @@ export default function SignupPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [tempLogoPath, setTempLogoPath] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
 
   const [formData, setFormData] = useState({
     // Step 1
@@ -543,14 +545,18 @@ export default function SignupPage() {
                     if (file) {
                       setLogoFile(file)
                       setLogoPreview(URL.createObjectURL(file))
-                      // Upload to temp path immediately
-                      const supabaseClient = createClient()
-                      const tempPath = `logos/temp/${Date.now()}-${file.name}`
-                      const { error } = await supabaseClient.storage
-                        .from('company-assets')
-                        .upload(tempPath, file, { upsert: true })
-                      if (!error) {
-                        setTempLogoPath(tempPath)
+                      setLogoUploading(true)
+                      try {
+                        const supabaseClient = createClient()
+                        const tempPath = `logos/temp/${Date.now()}-${file.name}`
+                        const { error } = await supabaseClient.storage
+                          .from('company-assets')
+                          .upload(tempPath, file, { upsert: true })
+                        if (!error) {
+                          setTempLogoPath(tempPath)
+                        }
+                      } finally {
+                        setLogoUploading(false)
                       }
                     }
                   }}
@@ -597,9 +603,10 @@ export default function SignupPage() {
               </button>
               <button
                 onClick={() => { setError(null); setStep(4) }}
-                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors"
+                disabled={logoUploading}
+                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors disabled:opacity-50"
               >
-                Continue →
+                {logoUploading ? 'Uploading logo...' : 'Continue →'}
               </button>
             </div>
           </div>
