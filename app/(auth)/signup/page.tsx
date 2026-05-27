@@ -72,6 +72,18 @@ export default function SignupPage() {
             last_name: formData.lastName,
             role: accountType,
             company_name: formData.companyName,
+            company_email: formData.companyEmail || formData.email,
+            company_phone: formData.companyPhone,
+            license_number: formData.licenseNumber,
+            website_url: formData.website,
+            address_line1: formData.addressLine1,
+            city: formData.city,
+            province_state: formData.provinceState,
+            postal_zip: formData.postalZip,
+            country: formData.country,
+            accent_color: formData.accentColor,
+            disclaimer: formData.disclaimer,
+            temp_logo_path: tempLogoPath,
           }
         }
       })
@@ -111,6 +123,7 @@ export default function SignupPage() {
       if (companyError) throw new Error(`Company error: ${companyError.message}`)
 
       // 3. Create company member record linking user to company
+      const [tempLogoPath, setTempLogoPath] = useState<string | null>(null)
       const { error: memberError } = await supabase
         .from('company_members')
         .insert({
@@ -122,21 +135,7 @@ export default function SignupPage() {
         })
 
       if (memberError) throw new Error(`Member error: ${memberError.message}`)
-// Upload logo if provided
-      console.log('Logo file:', logoFile?.name, 'Company ID:', company?.id)
-      if (logoFile && company?.id) {
-        const ext = logoFile.name.split('.').pop()
-        const logoPath = `logos/${company.id}/logo.${ext}`
-        const supabaseClient = createClient()
-        await supabaseClient.storage
-          .from('company-assets')
-          .upload(logoPath, logoFile, { upsert: true })
-        
-        await supabaseClient
-          .from('companies')
-          .update({ logo_storage_path: logoPath })
-          .eq('id', company.id)
-      }
+
       // Send verification notification to admin
       const regInfo = REGULATORY_DATA[formData.provinceState]
       const regulatorHtml = regInfo?.licenseRequired
@@ -539,11 +538,20 @@ export default function SignupPage() {
                   type="file"
                   accept="image/png,image/jpeg"
                   className="hidden"
-                  onChange={e => {
+                  onChange={async e => {
                     const file = e.target.files?.[0]
                     if (file) {
                       setLogoFile(file)
                       setLogoPreview(URL.createObjectURL(file))
+                      // Upload to temp path immediately
+                      const supabaseClient = createClient()
+                      const tempPath = `logos/temp/${Date.now()}-${file.name}`
+                      const { error } = await supabaseClient.storage
+                        .from('company-assets')
+                        .upload(tempPath, file, { upsert: true })
+                      if (!error) {
+                        setTempLogoPath(tempPath)
+                      }
                     }
                   }}
                 />

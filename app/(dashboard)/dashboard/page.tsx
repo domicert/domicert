@@ -101,7 +101,18 @@ export default function DashboardPage() {
                 is_active: true,
               })
             setCompany(newCompany as unknown as Company)
-
+// Move temp logo to permanent path if exists
+            if (meta?.temp_logo_path) {
+              const ext = meta.temp_logo_path.split('.').pop()
+              const finalPath = `logos/${newCompany.id}/logo.${ext}`
+              await supabase.storage
+                .from('company-assets')
+                .move(meta.temp_logo_path, finalPath)
+              await supabase
+                .from('companies')
+                .update({ logo_storage_path: finalPath })
+                .eq('id', newCompany.id)
+            }
             // Send verification notification
             await fetch(`${window.location.origin}/api/admin/verify-inspector`, {
               method: 'POST',
