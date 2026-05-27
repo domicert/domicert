@@ -553,7 +553,10 @@ export default function SignupPage() {
                         const { error } = await supabaseClient.storage
                           .from('company-assets')
                           .upload(tempPath, file, { upsert: true })
-                        if (!error) {
+                        if (error) {
+                          console.error('Temp logo upload error:', error.message)
+                        } else {
+                          console.log('Temp logo uploaded to:', tempPath)
                           setTempLogoPath(tempPath)
                         }
                       } finally {
