@@ -51,7 +51,18 @@ export default function ProfilePage() {
         .single()
 
       if (memberData?.companies) {
-        setCompany(memberData.companies as unknown as Company)
+        const companyData = memberData.companies as unknown as Company
+        setCompany(companyData)
+
+        // Generate signed URL for logo if exists
+        if (companyData.logo_storage_path) {
+          const { data: signedData } = await supabase.storage
+            .from('company-assets')
+            .createSignedUrl(companyData.logo_storage_path, 3600)
+          if (signedData?.signedUrl) {
+            setLogoPreview(signedData.signedUrl)
+          }
+        }
       }
       setLoading(false)
     }
@@ -195,7 +206,7 @@ export default function ProfilePage() {
               {logoPreview || company?.logo_storage_path ? (
                 <div className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
                   <img
-                    src={logoPreview || ''}
+                    src={logoPreview || '/brand/domicert-mark.svg'}
                     alt="Company logo"
                     className="w-full h-full object-cover"
                   />
