@@ -66,6 +66,7 @@ export default function SignupPage() {
     setError(null)
     try {
       // 1. Create auth user
+      console.log('Temp logo path at signup:', tempLogoPath)
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
