@@ -4,7 +4,8 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import { DomicertReport } from '@/lib/pdf/report'
 import { Resend } from 'resend'
 import React from 'react'
-
+import Stripe from 'stripe'
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function toBase64DataUri(url: string): Promise<string> {
@@ -79,21 +80,52 @@ export async function POST(request: NextRequest) {
     }
     // Charge per report if trial is over
     if (trialUsed >= 10 && trialData?.payment_method_added) {
-      const chargeResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/charge`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inspectionId: 'pending',
-          tier: selectedTier,
-          companyId: companyMember?.company_id,
-        }),
+      const TIER_PRICES: Record<string, number> = {
+        text: 1000,
+        basic: 1500,
+        pro: 2000,
+        pro_plus: 2500,
+        unlimited: 3500,
+      }
+
+      const { data: companyStripe } = await supabase
+        .from('companies')
+        .select('stripe_customer_id')
+        .eq('id', companyMember?.company_id)
+        .single()
+
+      if (!companyStripe?.stripe_customer_id) {
+        return NextResponse.json({ error: 'No payment method on file. Please add a payment method to continue.' }, { status: 402 })
+      }
+
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: companyStripe.stripe_customer_id,
+        type: 'card',
       })
-      const chargeResult = await chargeResponse.json()
-      if (!chargeResult.success) {
-        return NextResponse.json(
-          { error: `Payment failed: ${chargeResult.error}. Please update your payment method.` },
-          { status: 402 }
-        )
+
+      if (!paymentMethods.data.length) {
+        return NextResponse.json({ error: 'No payment method found. Please add a payment method to continue.' }, { status: 402 })
+      }
+
+      const amount = TIER_PRICES[selectedTier] || TIER_PRICES.pro
+
+      try {
+        await stripe.paymentIntents.create({
+          amount,
+          currency: 'cad',
+          customer: companyStripe.stripe_customer_id,
+          payment_method: paymentMethods.data[0].id,
+          confirm: true,
+          off_session: true,
+          description: `Domicert inspection report - ${selectedTier} tier`,
+          metadata: {
+            company_id: companyMember?.company_id,
+            tier: selectedTier,
+          },
+        })
+      } catch (stripeErr) {
+        const message = stripeErr instanceof Error ? stripeErr.message : 'Payment failed'
+        return NextResponse.json({ error: `Payment failed: ${message}. Please update your payment method.` }, { status: 402 })
       }
     }
     // 3. Create homeowner user if not exists
