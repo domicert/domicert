@@ -59,7 +59,11 @@ export default function DashboardPage() {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
         if (!user) return
-
+// Redirect realtors to their dashboard
+        if (user.user_metadata?.role === 'realtor') {
+          window.location.href = '/realtor/billing'
+          return
+        }
         // Get company
         const { data: memberData } = await supabase
           .from('company_members')
