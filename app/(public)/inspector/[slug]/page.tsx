@@ -23,7 +23,8 @@ const badgeColors: Record<string, { bg: string, border: string, text: string }> 
   blue: { bg: '#E6F1FB', border: '#185FA5', text: '#0C447C' },
 }
 
-export default async function InspectorProfilePage({ params }: { params: { slug: string } }) {
+export default async function InspectorProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -58,14 +59,14 @@ export default async function InspectorProfilePage({ params }: { params: { slug:
         )
       )
     `)
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .eq('profile_public', true)
     .eq('verification_status', 'verified')
     .single()
 
-  console.log('Slug lookup:', params.slug, 'Result:', company?.name, 'Error checking slug')
+  console.log('Slug lookup:', slug, 'Result:', company?.name, 'Error checking slug')
   if (!company) {
-    console.log('Company not found for slug:', params.slug)
+    console.log('Company not found for slug:', slug)
     notFound()
   }
 
