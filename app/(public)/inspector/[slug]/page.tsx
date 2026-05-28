@@ -62,7 +62,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
   badges.sort((a, b) => (a.badge_definitions?.sort_order || 0) - (b.badge_definitions?.sort_order || 0))
   const isVerified = company.verification_status === 'verified'
 
-  console.log('Query error:', companyError?.message, 'Slug:', slug, 'Company:', company?.name)
+  
   if (!company) notFound()
     // Generate signed URL for logo
   let logoUrl: string | null = null
