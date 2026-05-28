@@ -63,7 +63,11 @@ export default async function InspectorProfilePage({ params }: { params: { slug:
     .eq('verification_status', 'verified')
     .single()
 
-  if (!company) notFound()
+  console.log('Slug lookup:', params.slug, 'Result:', company?.name, 'Error checking slug')
+  if (!company) {
+    console.log('Company not found for slug:', params.slug)
+    notFound()
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const badges = (company.inspector_badges || []).filter((b: any) => b.badge_definitions) as unknown as Badge[]
