@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 interface Badge {
@@ -16,6 +16,7 @@ interface Badge {
 interface Company {
   id: string
   slug: string
+  logo_storage_path: string | null
   name: string
   email: string
   website_url: string
@@ -37,7 +38,27 @@ const badgeColors: Record<string, { bg: string, border: string, text: string }> 
 export default function InspectorGrid({ inspectors }: { inspectors: Company[] }) {
   const [search, setSearch] = useState('')
   const [province, setProvince] = useState('')
+const [logoUrls, setLogoUrls] = useState<Record<string, string>>({})
 
+  useEffect(() => {
+    const fetchLogos = async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const urls: Record<string, string> = {}
+      for (const inspector of inspectors) {
+        if (inspector.logo_storage_path) {
+          const { data } = await supabase.storage
+            .from('company-assets')
+            .createSignedUrl(inspector.logo_storage_path, 3600)
+          if (data?.signedUrl) {
+            urls[inspector.id] = data.signedUrl
+          }
+        }
+      }
+      setLogoUrls(urls)
+    }
+    fetchLogos()
+  }, [inspectors])
   const filtered = inspectors.filter(i => {
     const matchSearch = !search ||
       i.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -134,12 +155,20 @@ export default function InspectorGrid({ inspectors }: { inspectors: Company[] })
                 <div className="flex gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-3 mb-3">
-                      <div
-                        className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-                        style={{ backgroundColor: inspector.accent_color || '#1D9E75' }}
-                      >
-                        {getInitials(inspector.name)}
-                      </div>
+                      {logoUrls[inspector.id] ? (
+                          <img
+                            src={logoUrls[inspector.id]}
+                            alt={inspector.name}
+                            className="w-11 h-11 rounded-xl object-cover flex-shrink-0 border border-gray-200"
+                          />
+                        ) : (
+                          <div
+                            className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+                            style={{ backgroundColor: inspector.accent_color || '#1D9E75' }}
+                          >
+                            {getInitials(inspector.name)}
+                          </div>
+                        )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-sm font-medium text-gray-900">{inspector.name}</span>

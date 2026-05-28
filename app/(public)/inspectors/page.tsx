@@ -18,6 +18,7 @@ export default async function InspectorDirectoryPage() {
       id,
       name,
       slug,
+      logo_storage_path,
       email,
       website_url,
       city,
