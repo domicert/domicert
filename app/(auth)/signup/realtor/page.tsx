@@ -235,7 +235,7 @@ export default function RealtorSignupPage() {
               </div>
 
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 mb-6">
-                <strong>$100/month</strong> subscription gives you unlimited access to search property inspection history across Canada. Your card will be charged after your account is activated.
+                <strong>$100/month</strong> subscription gives you unlimited access to search property inspection history in your area. Your card will be charged after your account is activated.
               </div>
 
               <div className="flex gap-3">

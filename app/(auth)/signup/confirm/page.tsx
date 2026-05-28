@@ -17,6 +17,9 @@ export default function ConfirmPage() {
         <p className="text-xs text-gray-400 mt-6">
           Didn't receive it? Check your spam folder or contact support via the chat widget.
         </p>
+        <p className="text-xs text-gray-400 mt-4">
+          Realtor? <a href="/realtor/billing" className="text-[#1D9E75] hover:underline">Activate your subscription →</a>
+        </p>
       </div>
     </div>
   )
