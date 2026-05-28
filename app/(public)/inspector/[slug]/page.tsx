@@ -44,12 +44,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
   const badges: Badge[] = []
     const isVerified = false
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const badges = (company.inspector_badges || []).filter((b: any) => b.badge_definitions) as unknown as Badge[]
-  badges.sort((a, b) => (a.badge_definitions?.sort_order || 0) - (b.badge_definitions?.sort_order || 0))
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isVerified = (company.inspector_badges || []).some((b: any) => b.badge_code === 'verified_pro')
+  
 
   const getInitials = (name: string) => {
     return name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'DC'
