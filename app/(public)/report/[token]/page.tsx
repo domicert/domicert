@@ -117,8 +117,11 @@ const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
                   item_label,
                   rating,
                   notes
+                ),
+                photos (
+                  id,
+                  storage_path_fullres
                 )
-                
               )
             )
           `)
