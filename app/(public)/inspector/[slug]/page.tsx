@@ -42,7 +42,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
   if (!company) notFound()
 
   const badges: Badge[] = []
-  const isVerified = company.verification_status === 'verified'
+    const isVerified = false
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const badges = (company.inspector_badges || []).filter((b: any) => b.badge_definitions) as unknown as Badge[]
