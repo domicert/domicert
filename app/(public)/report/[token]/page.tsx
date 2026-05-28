@@ -118,11 +118,7 @@ const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
                   rating,
                   notes
                 ),
-                photos (
-                  id,
-                  storage_path_fullres,
-                  caption
-                )
+                
               )
             )
           `)
