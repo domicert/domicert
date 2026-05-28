@@ -43,7 +43,6 @@ export default async function InspectorProfilePage({ params }: { params: Promise
 
   // Fetch badges separately
   const { data: badgeData, error: badgeError } = await supabase
-  console.log('Badge data:', JSON.stringify(badgeData), 'Badge error:', badgeError?.message)
     .from('inspector_badges')
     .select(`
       badge_code,
@@ -58,6 +57,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
     `)
     .eq('company_id', company.id)
 
+  console.log('Badge data:', JSON.stringify(badgeData), 'Badge error:', badgeError?.message)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const badges = ((badgeData || []).filter((b: any) => b.badge_definitions)) as unknown as Badge[]
   badges.sort((a, b) => (a.badge_definitions?.sort_order || 0) - (b.badge_definitions?.sort_order || 0))
