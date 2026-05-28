@@ -41,7 +41,7 @@ export default function Home() {
       <section className="max-w-4xl mx-auto px-8 pt-20 pb-16 text-center">
         <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
           <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          Trusted by inspectors across Canada
+          Trusted by inspectors across North America
         </div>
         <h1 className="text-5xl font-medium text-gray-900 leading-tight mb-6">
           Professional home inspections,<br />
@@ -120,10 +120,7 @@ export default function Home() {
             <p className="text-sm text-gray-500 mb-4 leading-relaxed">
               Search and purchase historical inspection reports on any property. Know what you're selling before you list it.
             </p>
-            <Link href="/signup?type=realtor" className="text-sm text-[#1D9E75] font-medium hover:underline">
-  Search reports →
-</Link>
-<Link href="/inspectors" className="text-sm text-[#1D9E75] font-medium hover:underline block mt-1">
+            <Link href="/inspectors" className="text-sm text-[#1D9E75] font-medium hover:underline">
   Find an inspector →
 </Link>
           </div>
