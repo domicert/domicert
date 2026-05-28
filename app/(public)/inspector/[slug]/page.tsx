@@ -30,45 +30,19 @@ export default async function InspectorProfilePage({ params }: { params: Promise
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const { data: company } = await supabase
+  const { data: company, error: companyError } = await supabase
     .from('companies')
-    .select(`
-      id,
-      name,
-      email,
-      phone,
-      license_number,
-      website_url,
-      city,
-      province_state,
-      accent_color,
-      logo_storage_path,
-      inspection_count,
-      updated_at,
-      profile_public,
-      verification_status,
-      inspector_badges (
-        badge_code,
-        awarded_at,
-        badge_definitions (
-          name,
-          description,
-          icon,
-          color,
-          sort_order
-        )
-      )
-    `)
+    .select('id, name, email, phone, license_number, website_url, city, province_state, accent_color, logo_storage_path, inspection_count, updated_at, profile_public, verification_status')
     .eq('slug', slug)
     .eq('profile_public', true)
     .eq('verification_status', 'verified')
     .single()
 
-  console.log('Slug lookup:', slug, 'Result:', company?.name, 'Error checking slug')
-  if (!company) {
-    console.log('Company not found for slug:', slug)
-    notFound()
-  }
+  console.log('Query error:', companyError?.message, 'Slug:', slug, 'Company:', company?.name)
+  if (!company) notFound()
+
+  const badges: Badge[] = []
+  const isVerified = company.verification_status === 'verified'
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const badges = (company.inspector_badges || []).filter((b: any) => b.badge_definitions) as unknown as Badge[]
