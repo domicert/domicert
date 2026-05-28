@@ -42,7 +42,8 @@ export default async function InspectorProfilePage({ params }: { params: Promise
   if (!company) notFound()
 
   // Fetch badges separately
-  const { data: badgeData } = await supabase
+  const { data: badgeData, error: badgeError } = await supabase
+  console.log('Badge data:', JSON.stringify(badgeData), 'Badge error:', badgeError?.message)
     .from('inspector_badges')
     .select(`
       badge_code,
