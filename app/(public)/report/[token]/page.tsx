@@ -61,13 +61,12 @@ interface ReportData {
 export default function ReportPage() {
   const params = useParams()
   const token = params.token as string
-
   const [report, setReport] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tosAccepted, setTosAccepted] = useState(false)
   const [tosChecked, setTosChecked] = useState(false)
-const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
   const supabase = createClient()
 
   useEffect(() => {
@@ -146,6 +145,7 @@ const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
           s => s.photos || []
         ) || []
         
+        console.log('All photos found:', allPhotos.length, JSON.stringify(allPhotos))
         if (allPhotos.length > 0) {
           const urls: Record<string, string> = {}
           for (const photo of allPhotos) {
