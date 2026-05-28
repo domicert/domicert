@@ -52,7 +52,7 @@ interface ReportData {
       photos: {
         id: string
         storage_path_fullres: string
-        caption: string | null
+
       }[]
     }[]
   }
@@ -451,9 +451,7 @@ const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
                               alt={photo.caption || 'Inspection photo'}
                               className="w-full h-40 object-cover rounded-lg border border-gray-200"
                             />
-                            {photo.caption && (
-                              <p className="text-xs text-gray-500 mt-1 text-center">{photo.caption}</p>
-                            )}
+                            
                           </div>
                         ) : null
                       ))}
