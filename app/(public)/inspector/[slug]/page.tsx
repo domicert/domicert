@@ -40,6 +40,16 @@ export default async function InspectorProfilePage({ params }: { params: Promise
 
   console.log('Query error:', companyError?.message, 'Slug:', slug, 'Company:', company?.name)
   if (!company) notFound()
+    // Generate signed URL for logo
+  let logoUrl: string | null = null
+  if (company.logo_storage_path) {
+    const { data: signedData } = await supabase.storage
+      .from('company-assets')
+      .createSignedUrl(company.logo_storage_path, 3600)
+    if (signedData?.signedUrl) {
+      logoUrl = signedData.signedUrl
+    }
+  }
 
   const badges: Badge[] = []
     const isVerified = false
@@ -69,12 +79,20 @@ export default async function InspectorProfilePage({ params }: { params: Promise
         <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
           <div className="flex items-start gap-6">
             {/* Logo / avatar */}
-            <div
-              className="w-20 h-20 rounded-xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
-              style={{ backgroundColor: company.accent_color || '#1D9E75' }}
-            >
-              {getInitials(company.name)}
-            </div>
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={company.name}
+                className="w-20 h-20 rounded-xl object-cover flex-shrink-0 border border-gray-200"
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+                style={{ backgroundColor: company.accent_color || '#1D9E75' }}
+              >
+                {getInitials(company.name)}
+              </div>
+            )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap mb-1">
