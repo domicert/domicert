@@ -18,6 +18,12 @@ export default async function RealtorDashboardPage() {
     .single()
 
   if (!realtor) redirect('/signup/realtor')
+  if (realtor.subscription_status !== 'active') redirect('/realtor/billing')
+
+  // Get subscription details from Stripe via database
+  const memberSince = new Date(realtor.created_at).toLocaleDateString('en-CA', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  })
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -31,39 +37,57 @@ export default async function RealtorDashboardPage() {
             <span className="text-sm text-gray-500">
               {realtor.first_name} {realtor.last_name}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-              realtor.subscription_status === 'active'
-                ? 'bg-green-50 text-green-700'
-                : 'bg-yellow-50 text-yellow-700'
-            }`}>
-              {realtor.subscription_status === 'active' ? 'Active' : 'Inactive'}
+            <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full font-medium">
+              Active
             </span>
+            <form action="/auth/signout" method="post">
+              <button className="text-sm text-gray-400 hover:text-gray-600">Sign out</button>
+            </form>
           </div>
         </div>
       </nav>
 
       <div className="max-w-5xl mx-auto px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-medium text-gray-900 mb-2">Property History Search</h1>
-          <p className="text-gray-500 text-sm">Search any address to view its inspection history</p>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-medium text-gray-900">
+              Welcome, {realtor.first_name}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {realtor.brokerage || 'Realtor'} · Member since {memberSince}
+            </p>
+          </div>
         </div>
 
-        {realtor.subscription_status !== 'active' ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-            <h2 className="font-medium text-yellow-800 mb-2">Subscription required</h2>
-            <p className="text-sm text-yellow-600 mb-4">
-              Activate your $100/month subscription to search property history.
-            </p>
-            <Link
-              href="/realtor/billing"
-              className="px-4 py-2 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56]"
-            >
-              Activate subscription →
-            </Link>
+        {/* Subscription card */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-xs text-gray-400 mb-1">Subscription</div>
+            <div className="text-sm font-medium text-gray-900">Realtor Access</div>
+            <div className="text-xs text-gray-500 mt-1">$100 / month</div>
           </div>
-        ) : (
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-xs text-gray-400 mb-1">Status</div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-gray-900">Active</span>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Renews monthly</div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="text-xs text-gray-400 mb-1">License</div>
+            <div className="text-sm font-medium text-gray-900">{realtor.license_number || 'Not provided'}</div>
+            <div className="text-xs text-gray-500 mt-1">{realtor.province_state}</div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="font-medium text-gray-900 mb-1">Property History Search</h2>
+          <p className="text-sm text-gray-500 mb-4">Search any address to view its verified inspection history</p>
           <RealtorSearch />
-        )}
+        </div>
       </div>
     </main>
   )

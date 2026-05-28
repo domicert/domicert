@@ -59,9 +59,21 @@ export default function DashboardPage() {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
         if (!user) return
-// Redirect realtors to their dashboard
+        // Redirect realtors to their dashboard
         if (user.user_metadata?.role === 'realtor') {
-          window.location.href = '/realtor/billing'
+          const { createClient: createSupabase } = await import('@/lib/supabase/client')
+          const supabaseClient = createSupabase()
+          const { data: realtor } = await supabaseClient
+            .from('realtors')
+            .select('subscription_status')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (realtor?.subscription_status === 'active') {
+            window.location.href = '/realtor/dashboard'
+          } else {
+            window.location.href = '/realtor/billing'
+          }
           return
         }
         // Get company
