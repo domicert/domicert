@@ -52,8 +52,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
     .from('badge_definitions')
     .select('code, name, description, icon, color, sort_order')
 
-    console.log('badgeData:', JSON.stringify(badgeData))
-  console.log('badgeDefs:', JSON.stringify(badgeDefs))
+    
 
   // Combine
   const badges = ((badgeData || []).map(b => {
