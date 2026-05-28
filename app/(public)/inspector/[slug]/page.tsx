@@ -42,24 +42,21 @@ export default async function InspectorProfilePage({ params }: { params: Promise
   if (!company) notFound()
 
   // Fetch badges separately
-  const { data: badgeData, error: badgeError } = await supabase
+  const { data: badgeData } = await supabase
     .from('inspector_badges')
-    .select(`
-      badge_code,
-      awarded_at,
-      badge_definitions (
-        name,
-        description,
-        icon,
-        color,
-        sort_order
-      )
-    `)
+    .select('badge_code, awarded_at')
     .eq('company_id', company.id)
 
-  console.log('Badge data:', JSON.stringify(badgeData), 'Badge error:', badgeError?.message)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const badges = ((badgeData || []).filter((b: any) => b.badge_definitions)) as unknown as Badge[]
+  // Fetch badge definitions
+  const { data: badgeDefs } = await supabase
+    .from('badge_definitions')
+    .select('code, name, description, icon, color, sort_order')
+
+  // Combine
+  const badges = ((badgeData || []).map(b => {
+    const def = (badgeDefs || []).find(d => d.code === b.badge_code)
+    return def ? { ...b, badge_definitions: def } : null
+  }).filter(Boolean)) as unknown as Badge[]
   badges.sort((a, b) => (a.badge_definitions?.sort_order || 0) - (b.badge_definitions?.sort_order || 0))
   const isVerified = company.verification_status === 'verified'
 
