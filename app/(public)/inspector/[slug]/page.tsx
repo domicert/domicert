@@ -38,7 +38,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
     .eq('verification_status', 'verified')
     .single()
 
-  console.log('Query error:', companyError?.message, 'Slug:', slug, 'Company:', company?.name)
+  
   if (!company) notFound()
 
   // Fetch badges separately
