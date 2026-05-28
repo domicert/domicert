@@ -263,11 +263,12 @@ export async function POST(request: NextRequest) {
           for (let i = 0; i < (photos as { path: string; caption: string }[]).length; i++) {
             const photo = (photos as { path: string; caption: string }[])[i]
             const storagePath = photo.path
-                      await supabase.from('photos').insert({
+                      const { error: photoInsertError } = await supabase.from('photos').insert({
               section_id: dbSectionId,
               storage_path_fullres: storagePath,
               uploaded_at: new Date().toISOString(),
             })
+          if (photoInsertError) console.error('Photo insert error:', photoInsertError.message)
             sectionPhotoMap[dbSectionId].push({
               storagePath: storagePath,
               caption: photo.caption || null,
