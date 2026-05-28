@@ -505,11 +505,11 @@ const handleResend = async (
                   Upload company logo
                 </Link>
                 <Link
-                  href="/profile"
+                  href="/billing"
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-sm text-gray-700"
                 >
-                  <span className="text-lg">🖼️</span>
-                  Upload company logo
+                  <span className="text-lg">💳</span>
+                  Manage billing
                 </Link>
               </div>
             </div>
