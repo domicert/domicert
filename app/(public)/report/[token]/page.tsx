@@ -448,7 +448,7 @@ const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
                           <div key={photo.id}>
                             <img
                               src={photoUrls[photo.id]}
-                              alt={photo.caption || 'Inspection photo'}
+                              alt="Inspection photo"
                               className="w-full h-40 object-cover rounded-lg border border-gray-200"
                             />
                             
