@@ -39,11 +39,13 @@ export default function InspectorGrid({ inspectors }: { inspectors: Company[] })
   const [search, setSearch] = useState('')
   const [province, setProvince] = useState('')
 const [logoUrls, setLogoUrls] = useState<Record<string, string>>({})
-
+const [badgeMap, setBadgeMap] = useState<Record<string, {badge_code: string, name: string, icon: string, color: string, sort_order: number}[]>>({})
   useEffect(() => {
-    const fetchLogos = async () => {
+    const fetchData = async () => {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
+
+      // Fetch logos
       const urls: Record<string, string> = {}
       for (const inspector of inspectors) {
         if (inspector.logo_storage_path) {
@@ -56,8 +58,30 @@ const [logoUrls, setLogoUrls] = useState<Record<string, string>>({})
         }
       }
       setLogoUrls(urls)
+
+      // Fetch badges and definitions
+      const companyIds = inspectors.map(i => i.id)
+      const { data: badgeData } = await supabase
+        .from('inspector_badges')
+        .select('badge_code, earned_at, company_id')
+        .in('company_id', companyIds)
+
+      const { data: badgeDefs } = await supabase
+        .from('badge_definitions')
+        .select('code, name, icon, color, sort_order')
+
+      // Build badge map per company
+      const badgeMap: Record<string, {badge_code: string, name: string, icon: string, color: string, sort_order: number}[]> = {}
+      for (const badge of (badgeData || [])) {
+        const def = (badgeDefs || []).find(d => d.code === badge.badge_code)
+        if (def) {
+          if (!badgeMap[badge.company_id]) badgeMap[badge.company_id] = []
+          badgeMap[badge.company_id].push({ badge_code: badge.badge_code, ...def })
+        }
+      }
+      setBadgeMap(badgeMap)
     }
-    fetchLogos()
+    fetchData()
   }, [inspectors])
   const filtered = inspectors.filter(i => {
     const matchSearch = !search ||
@@ -203,43 +227,46 @@ const [logoUrls, setLogoUrls] = useState<Record<string, string>>({})
                     </div>
                   </div>
 
-                  {badges.length > 0 && (
-                    <div className="w-20 flex-shrink-0 border-l border-gray-100 pl-3">
-                      <p className="text-xs text-gray-400 mb-2 text-center">Badges</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {badges.map((badge, idx) => {
-                          const colors = badgeColors[badge.badge_definitions?.color || 'teal']
-                          return (
-                            <div
-                              key={idx}
-                              title={badge.badge_definitions?.name || ''}
-                              className="relative flex items-center justify-center"
-                              style={{ width: 28, height: 28 }}
-                            >
-                              <svg viewBox="0 0 28 28" width="28" height="28" style={{ position: 'absolute' }}>
-                                <polygon
-                                  points="14,2 24,8 24,20 14,26 4,20 4,8"
-                                  fill={colors.bg}
-                                  stroke={colors.border}
-                                  strokeWidth="1.5"
-                                />
-                              </svg>
-                              <i
-                                className={'ti ' + badge.badge_definitions?.icon}
-                                style={{ fontSize: 11, color: colors.text, position: 'relative', zIndex: 1 }}
-                                aria-hidden="true"
-                              />
-                            </div>
-                          )
-                        })}
+                  {(badgeMap[inspector.id] || []).length > 0 && (
+                      <div className="w-20 flex-shrink-0 border-l border-gray-100 pl-3">
+                        <p className="text-xs text-gray-400 mb-2 text-center">Badges</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {(badgeMap[inspector.id] || [])
+                            .sort((a, b) => b.sort_order - a.sort_order)
+                            .slice(0, 4)
+                            .map((badge, idx) => {
+                              const colors = badgeColors[badge.color || 'teal']
+                              return (
+                                <div
+                                  key={idx}
+                                  title={badge.name}
+                                  className="relative flex items-center justify-center"
+                                  style={{ width: 28, height: 28 }}
+                                >
+                                  <svg viewBox="0 0 28 28" width="28" height="28" style={{ position: 'absolute' }}>
+                                    <polygon
+                                      points="14,2 24,8 24,20 14,26 4,20 4,8"
+                                      fill={colors.bg}
+                                      stroke={colors.border}
+                                      strokeWidth="1.5"
+                                    />
+                                  </svg>
+                                  <i
+                                    className={'ti ' + badge.icon}
+                                    style={{ fontSize: 11, color: colors.text, position: 'relative', zIndex: 1 }}
+                                    aria-hidden="true"
+                                  />
+                                </div>
+                              )
+                            })}
+                        </div>
+                        {(badgeMap[inspector.id] || []).length > 4 && (
+                          <p className="text-xs text-gray-400 text-center mt-1">
+                            +{(badgeMap[inspector.id] || []).length - 4} more
+                          </p>
+                        )}
                       </div>
-                      {(inspector.inspector_badges?.length || 0) > 4 && (
-                        <p className="text-xs text-gray-400 text-center mt-1">
-                          +{(inspector.inspector_badges?.length || 0) - 4} more
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
