@@ -435,7 +435,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         .update({ trial_reports_used: trialUsed + 1 })
         .eq('id', companyMember.company_id)
 
-      if (trialUsed + 1 === 6 && !trialData?.trial_reminder_6_sent) {
+      if (trialData && trialUsed + 1 === 6 && !trialData.trial_reminder_6_sent) {
         await resend.emails.send({
           from: 'Domicert <reports@domicert.ca>',
           to: trialData.email,
@@ -459,7 +459,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         await supabase.from('companies').update({ trial_reminder_6_sent: true }).eq('id', companyMember.company_id)
       }
 
-      if (trialUsed + 1 === 8 && !trialData?.trial_reminder_8_sent) {
+     if (trialData && trialUsed + 1 === 8 && !trialData.trial_reminder_8_sent) {
         await resend.emails.send({
           from: 'Domicert <reports@domicert.ca>',
           to: trialData.email,
@@ -483,7 +483,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         await supabase.from('companies').update({ trial_reminder_8_sent: true }).eq('id', companyMember.company_id)
       }
 
-      if (trialUsed + 1 === 10 && !trialData?.trial_reminder_10_sent) {
+      if (trialData && trialUsed + 1 === 10 && !trialData.trial_reminder_10_sent) {
         await resend.emails.send({
           from: 'Domicert <reports@domicert.ca>',
           to: trialData.email,
