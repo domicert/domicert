@@ -17,6 +17,7 @@ export default async function InspectorDirectoryPage() {
     .select(`
       id,
       name,
+      slug,
       email,
       website_url,
       city,

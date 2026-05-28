@@ -15,6 +15,7 @@ interface Badge {
 
 interface Company {
   id: string
+  slug: string
   name: string
   email: string
   website_url: string
@@ -231,9 +232,12 @@ export default function InspectorGrid({ inspectors }: { inspectors: Company[] })
                       Website
                     </Link>
                   )}
-                  <div className="flex-1 py-1.5 bg-[#1D9E75] rounded-lg text-xs text-white text-center">
-                    View profile
-                  </div>
+                  <Link
+                      href={'/inspector/' + (inspector.slug || inspector.id)}
+                      className="flex-1 py-1.5 bg-[#1D9E75] rounded-lg text-xs text-white text-center"
+                    >
+                      View profile
+                    </Link>
                 </div>
               </div>
             )

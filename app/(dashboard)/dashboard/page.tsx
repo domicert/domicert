@@ -70,6 +70,7 @@ export default function DashboardPage() {
             .insert({
               owner_user_id: user.id,
               name: meta?.company_name || 'My Company',
+              slug: (meta?.company_name || 'my-company').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
               email: meta?.company_email || user.email,
               phone: meta?.company_phone || null,
               license_number: meta?.license_number || null,
