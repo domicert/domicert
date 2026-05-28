@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
     // 7. Save photos FIRST (must happen before PDF generation)
     const { photoData } = body
     const sectionPhotoMap: Record<string, { storagePath: string; caption: string | null }[]> = {}
-console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
+
     if (photoData && Object.keys(photoData).length > 0) {
       for (const [tempSectionId, photos] of Object.entries(photoData)) {
        const matchingSection = await supabase
@@ -263,8 +263,7 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
           for (let i = 0; i < (photos as { path: string; caption: string }[]).length; i++) {
             const photo = (photos as { path: string; caption: string }[])[i]
             const storagePath = photo.path
-            console.log('Using photo path:', storagePath)
-          await supabase.from('photos').insert({
+                      await supabase.from('photos').insert({
               section_id: dbSectionId,
               storage_path_fullres: storagePath,
               uploaded_at: new Date().toISOString(),
@@ -280,8 +279,7 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
 
    // 8. Fetch photos as base64, keyed by section label for PDF lookup
     const sectionLabelPhotoMap: Record<string, { src: string; caption: string | null }[]> = {}
-    console.log('sectionPhotoMap keys:', Object.keys(sectionPhotoMap))
-
+    
     for (const [dbSectionId, photos] of Object.entries(sectionPhotoMap)) {
       const { data: sectionRecord } = await supabase
         .from('inspection_sections')
@@ -293,14 +291,11 @@ console.log('photoData received:', JSON.stringify(Object.keys(photoData || {})))
         const base64Photos = await Promise.all(
           photos.map(async (photo) => {
             const cleanPath = photo.storagePath.replace(/^photos\//, '')
-            console.log('Creating signed URL for:', cleanPath)
-            const { data: signedData, error: signedError } = await supabase.storage
+                        const { data: signedData, error: signedError } = await supabase.storage
               .from('photos')
               .createSignedUrl(cleanPath, 120)
-            console.log('Signed URL result:', { url: !!signedData?.signedUrl, error: signedError?.message })
-
+            
             if (!signedData?.signedUrl) return null
-console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.storagePath)
             try {
               const src = await toBase64DataUri(signedData.signedUrl)
               return { src, caption: photo.caption }
@@ -318,8 +313,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
     }
 // Fetch company logo as base64
     let logoSrc: string | undefined
-    console.log('Company logo path:', company?.logo_storage_path)
-    if (company?.logo_storage_path) {
+        if (company?.logo_storage_path) {
       try {
         const { data: signedLogo } = await supabase.storage
           .from('company-assets')
