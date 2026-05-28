@@ -31,6 +31,11 @@ interface Inspection {
 interface Company {
   name: string
   inspection_count: number
+  payment_method_added?: boolean
+  trial_reports_used?: number
+  trial_reminder_6_sent?: boolean
+  trial_reminder_8_sent?: boolean
+  trial_reminder_10_sent?: boolean
 }
 
 export default function DashboardPage() {
@@ -58,7 +63,7 @@ export default function DashboardPage() {
         // Get company
         const { data: memberData } = await supabase
           .from('company_members')
-          .select('company_id, companies(id, name, inspection_count, verification_status, verification_notified_at, license_number, phone, email, website_url, province_state)')
+          .select('company_id, companies(id, name, inspection_count, verification_status, verification_notified_at, license_number, phone, email, website_url, province_state, payment_method_added, trial_reports_used, trial_reminder_6_sent, trial_reminder_8_sent, trial_reminder_10_sent)')
           .eq('user_id', user.id)
           .single()
 
@@ -302,6 +307,44 @@ const handleResend = async (
       </nav>
 
       <div className="max-w-6xl mx-auto px-8 py-8">
+       {/* Trial banners */}
+        {company && (
+          <>
+            {(company.trial_reports_used || 0) >= 10 && !company.payment_method_added && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-red-800 text-sm">Free trial complete</div>
+                  <div className="text-xs text-red-600 mt-0.5">Add a payment method to continue submitting reports.</div>
+                </div>
+                <Link href="/billing" className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
+                  Add payment method →
+                </Link>
+              </div>
+            )}
+            {(company.trial_reports_used || 0) === 8 && !company.payment_method_added && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-yellow-800 text-sm">2 free reports remaining</div>
+                  <div className="text-xs text-yellow-600 mt-0.5">Add your payment method now for uninterrupted service.</div>
+                </div>
+                <Link href="/billing" className="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-medium hover:bg-yellow-700">
+                  Add card →
+                </Link>
+              </div>
+            )}
+            {(company.trial_reports_used || 0) === 6 && !company.payment_method_added && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-blue-800 text-sm">4 free reports remaining</div>
+                  <div className="text-xs text-blue-600 mt-0.5">You have 4 reports left in your free trial.</div>
+                </div>
+                <Link href="/billing" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                  View billing →
+                </Link>
+              </div>
+            )}
+          </>
+        )}
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

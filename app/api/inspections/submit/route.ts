@@ -62,7 +62,21 @@ export async function POST(request: NextRequest) {
       .single()
 
     const company = companyMember?.companies as unknown as Record<string, string> | null
+// Check trial status — block if over limit
+    const { data: trialData } = await supabase
+      .from('companies')
+      .select('trial_reports_used, payment_method_added, email, name')
+      .eq('id', companyMember?.company_id)
+      .single()
 
+    const trialUsed = trialData?.trial_reports_used || 0
+
+    if (trialUsed >= 10 && !trialData?.payment_method_added) {
+      return NextResponse.json(
+        { error: 'Free trial complete. Please add a payment method to continue submitting reports.' },
+        { status: 402 }
+      )
+    }
     // 3. Create homeowner user if not exists
     let homeownerUserId = null
     if (property.clientEmail) {
@@ -415,7 +429,82 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
       await supabase.rpc('increment_inspection_count', {
         company_id_param: companyMember.company_id
       })
+// Update trial count and send reminders
+      await supabase
+        .from('companies')
+        .update({ trial_reports_used: trialUsed + 1 })
+        .eq('id', companyMember.company_id)
 
+      if (trialUsed + 1 === 6 && !trialData?.trial_reminder_6_sent) {
+        await resend.emails.send({
+          from: 'Domicert <reports@domicert.ca>',
+          to: trialData.email,
+          subject: '4 free reports remaining on your Domicert trial',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+              <div style="background: #1D9E75; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h1 style="color: white; margin: 0; font-size: 18px;">4 free reports remaining</h1>
+              </div>
+              <p>Hi ${trialData.name},</p>
+              <p>You've used 6 of your 10 free Domicert reports. You have 4 remaining in your trial.</p>
+              <p>Add your payment method now to ensure uninterrupted service when your trial ends.</p>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" 
+                 style="display: inline-block; background: #1D9E75; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Add payment method
+              </a>
+              <p style="color: #9CA3AF; font-size: 12px; margin-top: 24px;">Domicert - Certified - Lasting - Trusted</p>
+            </div>
+          `,
+        })
+        await supabase.from('companies').update({ trial_reminder_6_sent: true }).eq('id', companyMember.company_id)
+      }
+
+      if (trialUsed + 1 === 8 && !trialData?.trial_reminder_8_sent) {
+        await resend.emails.send({
+          from: 'Domicert <reports@domicert.ca>',
+          to: trialData.email,
+          subject: 'Only 2 free reports left - add your payment method',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+              <div style="background: #D97706; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h1 style="color: white; margin: 0; font-size: 18px;">2 free reports remaining</h1>
+              </div>
+              <p>Hi ${trialData.name},</p>
+              <p>You've used 8 of your 10 free Domicert reports. Only 2 left!</p>
+              <p>Add your payment method now to keep submitting reports without interruption.</p>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" 
+                 style="display: inline-block; background: #D97706; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Add payment method now
+              </a>
+              <p style="color: #9CA3AF; font-size: 12px; margin-top: 24px;">Domicert - Certified - Lasting - Trusted</p>
+            </div>
+          `,
+        })
+        await supabase.from('companies').update({ trial_reminder_8_sent: true }).eq('id', companyMember.company_id)
+      }
+
+      if (trialUsed + 1 === 10 && !trialData?.trial_reminder_10_sent) {
+        await resend.emails.send({
+          from: 'Domicert <reports@domicert.ca>',
+          to: trialData.email,
+          subject: 'Your Domicert free trial is complete',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+              <div style="background: #DC2626; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                <h1 style="color: white; margin: 0; font-size: 18px;">Free trial complete</h1>
+              </div>
+              <p>Hi ${trialData.name},</p>
+              <p>You've used all 10 of your free Domicert reports. To continue submitting reports, please add a payment method.</p>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" 
+                 style="display: inline-block; background: #DC2626; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                Add payment method
+              </a>
+              <p style="color: #9CA3AF; font-size: 12px; margin-top: 24px;">Domicert - Certified - Lasting - Trusted</p>
+            </div>
+          `,
+        })
+        await supabase.from('companies').update({ trial_reminder_10_sent: true }).eq('id', companyMember.company_id)
+      }
       // Get updated inspection count
       const { data: companyData } = await supabase
         .from('companies')
@@ -445,6 +534,7 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         if (!existingBadge) {
           await supabase.from('inspector_badges').insert({
             company_id: companyMember.company_id,
+            user_id: user.id,
             badge_code: milestoneBadges[inspectionCount],
           })
         }
@@ -460,18 +550,13 @@ console.log('Signed URL created:', !!signedData?.signedUrl, 'for path:', photo.s
         if (!existingFirst) {
           await supabase.from('inspector_badges').insert({
             company_id: companyMember.company_id,
+            user_id: user.id,
             badge_code: 'first_steps',
           })
         }
       }
 
-      // Check clean sweep — 10 consecutive clean reports
-      const { data: recentReports } = await supabase
-        .from('reports')
-        .select('haz_count, def_count')
-        .eq('inspection_id', inspection.id)
-        .order('generated_at', { ascending: false })
-        .limit(10)
+      
 
       // Check for 9-badge alert email to you
       const { data: badgeCount } = await supabase
