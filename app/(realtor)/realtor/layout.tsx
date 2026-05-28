@@ -19,17 +19,5 @@ export default async function RealtorLayout({
 
   if (!realtor) redirect('/signup/realtor')
 
-  return <>{children}</>
-}
-
-  // Check if user has a realtor record
-  const { data: realtor } = await supabase
-    .from('realtors')
-    .select('id, subscription_status')
-    .eq('user_id', user.id)
-    .single()
-
-  if (!realtor) redirect('/signup/realtor')
-
-  return <>{children}</>
+  return <div>{children}</div>
 }
