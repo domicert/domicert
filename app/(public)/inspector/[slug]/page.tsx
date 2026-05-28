@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 interface Badge {
   badge_code: string
-  awarded_at: string
+  earned_at: string
   badge_definitions: {
     name: string
     description: string
@@ -44,7 +44,7 @@ export default async function InspectorProfilePage({ params }: { params: Promise
   // Fetch badges separately
   const { data: badgeData } = await supabase
     .from('inspector_badges')
-    .select('badge_code, awarded_at')
+    .select('badge_code, earned_at')
     .eq('company_id', company.id)
 
   // Fetch badge definitions
