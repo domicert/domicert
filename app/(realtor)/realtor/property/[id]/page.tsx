@@ -116,7 +116,7 @@ export default async function PropertyHistoryPage({ params }: { params: Promise<
                       >
                         {inspection.companies?.name}
                       </Link>
-                      {' '}· {inspection.companies?.city}, {inspection.companies?.province_state}
+                      {' '}· {[inspection.companies?.city, inspection.companies?.province_state].filter(Boolean).join(', ')}
                     </div>
                   </div>
                   <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full">
