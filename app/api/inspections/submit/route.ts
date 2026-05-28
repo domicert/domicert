@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 // Check trial status — block if over limit
     const { data: trialData } = await supabase
       .from('companies')
-      .select('trial_reports_used, payment_method_added, email, name')
+      .select('trial_reports_used, payment_method_added, email, name, trial_reminder_6_sent, trial_reminder_8_sent, trial_reminder_10_sent')
       .eq('id', companyMember?.company_id)
       .single()
 
