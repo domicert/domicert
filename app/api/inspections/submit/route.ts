@@ -77,6 +77,25 @@ export async function POST(request: NextRequest) {
         { status: 402 }
       )
     }
+    // Charge per report if trial is over
+    if (trialUsed >= 10 && trialData?.payment_method_added) {
+      const chargeResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/charge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inspectionId: 'pending',
+          tier: selectedTier,
+          companyId: companyMember?.company_id,
+        }),
+      })
+      const chargeResult = await chargeResponse.json()
+      if (!chargeResult.success) {
+        return NextResponse.json(
+          { error: `Payment failed: ${chargeResult.error}. Please update your payment method.` },
+          { status: 402 }
+        )
+      }
+    }
     // 3. Create homeowner user if not exists
     let homeownerUserId = null
     if (property.clientEmail) {
