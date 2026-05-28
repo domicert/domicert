@@ -49,6 +49,11 @@ interface ReportData {
         rating: string | null
         notes: string
       }[]
+      photos: {
+        id: string
+        storage_path_fullres: string
+        caption: string | null
+      }[]
     }[]
   }
 }
@@ -62,7 +67,7 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null)
   const [tosAccepted, setTosAccepted] = useState(false)
   const [tosChecked, setTosChecked] = useState(false)
-
+const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
   const supabase = createClient()
 
   useEffect(() => {
@@ -112,6 +117,11 @@ export default function ReportPage() {
                   item_label,
                   rating,
                   notes
+                ),
+                photos (
+                  id,
+                  storage_path_fullres,
+                  caption
                 )
               )
             )
@@ -132,7 +142,24 @@ export default function ReportPage() {
         }
 
         setReport(data as unknown as ReportData)
-
+// Fetch signed URLs for photos
+        const allPhotos = (data as unknown as ReportData).inspections?.inspection_sections?.flatMap(
+          s => s.photos || []
+        ) || []
+        
+        if (allPhotos.length > 0) {
+          const urls: Record<string, string> = {}
+          for (const photo of allPhotos) {
+            const cleanPath = photo.storage_path_fullres.replace(/^photos\//, '')
+            const { data: signedData } = await supabase.storage
+              .from('photos')
+              .createSignedUrl(cleanPath, 3600)
+            if (signedData?.signedUrl) {
+              urls[photo.id] = signedData.signedUrl
+            }
+          }
+          setPhotoUrls(urls)
+        }
         // Check if TOS already accepted this session
         const accepted = sessionStorage.getItem(`tos_accepted_${token}`)
         if (accepted) setTosAccepted(true)
@@ -411,6 +438,27 @@ export default function ReportPage() {
                   <div className="px-5 py-3 bg-blue-50">
                     <div className="text-xs font-medium text-blue-700 mb-1">Inspector notes</div>
                     <div className="text-xs text-blue-800">{section.inspector_notes}</div>
+                  </div>
+                )}
+                {section.photos && section.photos.length > 0 && (
+                  <div className="px-5 py-4 border-t border-gray-50">
+                    <div className="text-xs font-medium text-gray-500 mb-3">Photos</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {section.photos.map(photo => (
+                        photoUrls[photo.id] ? (
+                          <div key={photo.id}>
+                            <img
+                              src={photoUrls[photo.id]}
+                              alt={photo.caption || 'Inspection photo'}
+                              className="w-full h-40 object-cover rounded-lg border border-gray-200"
+                            />
+                            {photo.caption && (
+                              <p className="text-xs text-gray-500 mt-1 text-center">{photo.caption}</p>
+                            )}
+                          </div>
+                        ) : null
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
