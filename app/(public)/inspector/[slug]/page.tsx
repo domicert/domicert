@@ -32,7 +32,33 @@ export default async function InspectorProfilePage({ params }: { params: Promise
 
   const { data: company, error: companyError } = await supabase
     .from('companies')
-    .select('id, name, email, phone, license_number, website_url, city, province_state, accent_color, logo_storage_path, inspection_count, updated_at, profile_public, verification_status')
+    .select(`
+      id,
+      name,
+      email,
+      phone,
+      license_number,
+      website_url,
+      city,
+      province_state,
+      accent_color,
+      logo_storage_path,
+      inspection_count,
+      updated_at,
+      profile_public,
+      verification_status,
+      inspector_badges (
+        badge_code,
+        awarded_at,
+        badge_definitions (
+          name,
+          description,
+          icon,
+          color,
+          sort_order
+        )
+      )
+    `)
     .eq('slug', slug)
     .eq('profile_public', true)
     .eq('verification_status', 'verified')
@@ -51,8 +77,10 @@ export default async function InspectorProfilePage({ params }: { params: Promise
     }
   }
 
-  const badges: Badge[] = []
-    const isVerified = false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const badges = ((company.inspector_badges || []).filter((b: any) => b.badge_definitions)) as unknown as Badge[]
+  badges.sort((a, b) => (a.badge_definitions?.sort_order || 0) - (b.badge_definitions?.sort_order || 0))
+  const isVerified = company.verification_status === 'verified'
 
   
 
