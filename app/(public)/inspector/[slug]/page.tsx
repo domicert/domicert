@@ -66,7 +66,7 @@ export default async function InspectorProfilePage({ params }: { params: { slug:
   if (!company) notFound()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const badges = (company.inspector_badges || []).filter((b: any) => b.badge_definitions) as Badge[]
+  const badges = (company.inspector_badges || []).filter((b: any) => b.badge_definitions) as unknown as Badge[]
   badges.sort((a, b) => (a.badge_definitions?.sort_order || 0) - (b.badge_definitions?.sort_order || 0))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
