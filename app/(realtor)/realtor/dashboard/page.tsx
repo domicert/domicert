@@ -40,9 +40,9 @@ export default async function RealtorDashboardPage() {
             <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full font-medium">
               Active
             </span>
-            <form action="/auth/signout" method="post">
-              <button className="text-sm text-gray-400 hover:text-gray-600">Sign out</button>
-            </form>
+            <Link href="/api/auth/signout" className="text-sm text-gray-400 hover:text-gray-600">
+              Sign out
+            </Link>
           </div>
         </div>
       </nav>
