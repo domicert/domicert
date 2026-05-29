@@ -1014,7 +1014,7 @@ const [draftRestored, setDraftRestored] = useState(false)
       <div className="text-xs text-gray-400">📷 Add photo</div>
       <input
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/jpg,image/webp,image/heic"
         capture="environment"
         multiple
         onChange={e => handlePhotoAdd(section.id, e.target.files)}
