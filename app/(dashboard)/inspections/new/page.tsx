@@ -395,7 +395,26 @@ const [draftRestored, setDraftRestored] = useState(false)
 
   const totalPhotos = Object.values(sectionPhotos).reduce((acc, photos) => acc + photos.length, 0)
 
-  const handlePhotoAdd = (sectionId: string, files: FileList | null) => {
+  const convertToJpeg = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = document.createElement('img')
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0)
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url)
+          resolve(new File([blob!], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+        }, 'image/jpeg', 0.92)
+      }
+      img.src = url
+    })
+  }
+
+  const handlePhotoAdd = async (sectionId: string, files: FileList | null) => {
     if (!files) return
     const limit = getTierLimit()
     const newFiles = Array.from(files)
@@ -408,7 +427,8 @@ const [draftRestored, setDraftRestored] = useState(false)
       return
     }
 
-    const newPhotos = newFiles.map(file => ({
+    const convertedFiles = await Promise.all(newFiles.map(f => convertToJpeg(f)))
+    const newPhotos = convertedFiles.map(file => ({
       file,
       preview: URL.createObjectURL(file),
       caption: '',
