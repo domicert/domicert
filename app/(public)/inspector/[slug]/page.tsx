@@ -4,7 +4,32 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  const { data: company } = await supabase
+    .from('companies')
+    .select('name, city, province_state, license_number')
+    .eq('slug', slug)
+    .single()
 
+  if (!company) return { title: 'Inspector — Domicert' }
+
+  const location = [company.city, company.province_state].filter(Boolean).join(', ')
+
+  return {
+    title: `${company.name} — Certified Home Inspector${location ? ` in ${location}` : ''} | Domicert`,
+    description: `${company.name} is a verified home inspector${location ? ` in ${location}` : ''}. View their credentials, badges, and contact information on Domicert.`,
+    openGraph: {
+      title: `${company.name} — Home Inspector | Domicert`,
+      description: `Verified home inspector${location ? ` in ${location}` : ''}. Certified · Lasting · Trusted.`,
+      url: `https://domicert.ca/inspector/${slug}`,
+    },
+  }
+}
 interface Badge {
   badge_code: string
   earned_at: string
