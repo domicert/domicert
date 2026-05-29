@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Company not found', { status: 404 })
     }
 
-    console.log('Company found:', company.name, 'email:', company.email)
+    
 
     if (action === 'approve') {
       await supabase
