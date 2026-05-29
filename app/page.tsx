@@ -136,9 +136,9 @@ export default function Home() {
             <p className="text-sm text-gray-500 mb-4 leading-relaxed">
               Access your inspection report anytime. Your home's certified history, securely stored and always available.
             </p>
-            <Link href="/report" className="text-sm text-[#1D9E75] font-medium hover:underline">
-              View my report →
-            </Link>
+            <Link href="/login" className="text-sm text-[#1D9E75] font-medium hover:underline">
+  Access my report →
+</Link>
           </div>
         </div>
       </section>
