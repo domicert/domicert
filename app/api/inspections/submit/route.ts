@@ -5,6 +5,7 @@ import { DomicertReport } from '@/lib/pdf/report'
 import { Resend } from 'resend'
 import React from 'react'
 import Stripe from 'stripe'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -28,7 +29,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
     // Calculate counts
     const counts = {
       haz: sections.reduce((acc: number, s: { items: { rating: string }[] }) => acc + s.items.filter((i: { rating: string }) => i.rating === 'haz').length, 0),
@@ -263,7 +267,7 @@ export async function POST(request: NextRequest) {
           for (let i = 0; i < (photos as { path: string; caption: string }[]).length; i++) {
             const photo = (photos as { path: string; caption: string }[])[i]
             const storagePath = photo.path
-                      const { error: photoInsertError } = await supabase.from('photos').insert({
+            const { error: photoInsertError } = await serviceSupabase.from('photos').insert({
               section_id: dbSectionId,
               storage_path_fullres: storagePath,
               uploaded_at: new Date().toISOString(),
