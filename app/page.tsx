@@ -57,12 +57,7 @@ export default function Home() {
           >
             Start for free →
           </Link>
-          <Link
-            href="/signup?type=realtor"
-            className="px-6 py-3 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-          >
-            I'm a realtor
-          </Link>
+          
         </div>
       </section>
 
@@ -134,10 +129,10 @@ export default function Home() {
             </div>
             <h3 className="font-medium text-gray-900 mb-2">For homeowners</h3>
             <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-              Access your inspection report anytime. Your home's certified history, securely stored and always available.
-            </p>
-            <Link href="/login" className="text-sm text-[#1D9E75] font-medium hover:underline">
-  Access my report →
+  Find a certified inspector in your area. Your report will be delivered directly to your email after inspection.
+</p>
+            <Link href="/inspectors" className="text-sm text-[#1D9E75] font-medium hover:underline">
+  Find an inspector →
 </Link>
           </div>
         </div>
