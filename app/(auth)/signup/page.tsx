@@ -17,7 +17,7 @@ export default function SignupPage() {
   const [tempLogoPath, setTempLogoPath] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   const [formData, setFormData] = useState({
     // Step 1
@@ -241,32 +241,13 @@ export default function SignupPage() {
             <h1 className="text-xl font-medium text-gray-900 mb-1">Create your account</h1>
             <p className="text-sm text-gray-500 mb-6">Choose your account type to get started</p>
 
-            {/* Account type selector */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <button
-                onClick={() => setAccountType('inspector')}
-                className={`p-4 rounded-lg border-2 text-left transition-colors ${
-                  accountType === 'inspector'
-                    ? 'border-[#1D9E75] bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
+            {/* Account type selector - realtor coming soon */}
+            <div className="mb-6">
+              <div className="p-4 rounded-lg border-2 border-[#1D9E75] bg-green-50 text-left">
                 <div className="text-2xl mb-2">🏠</div>
                 <div className="font-medium text-gray-900 text-sm">Inspector</div>
                 <div className="text-xs text-gray-500 mt-1">Run inspections, generate reports</div>
-              </button>
-              <button
-                onClick={() => setAccountType('realtor')}
-                className={`p-4 rounded-lg border-2 text-left transition-colors ${
-                  accountType === 'realtor'
-                    ? 'border-[#1D9E75] bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="text-2xl mb-2">🔑</div>
-                <div className="font-medium text-gray-900 text-sm">Realtor</div>
-                <div className="text-xs text-gray-500 mt-1">Search and purchase reports</div>
-              </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -667,33 +648,27 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* TOS */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-xs text-gray-500 leading-relaxed">
+       {/* TOS */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-xs text-gray-500 leading-relaxed">
               By creating an account you agree to the{' '}
-              <Link href="/terms/inspector" className="text-[#1D9E75] hover:underline">
+              <Link href="/terms/inspector" target="_blank" className="text-[#1D9E75] hover:underline">
                 Domicert Inspector Terms of Service
               </Link>
               {' '}including our data retention, marketplace participation, and revenue sharing policies.
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep(3)}
-                className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors"
-              >
-                ← Back
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Creating account...' : 'Create account →'}
-              </button>
-            </div>
-          </div>
-        )}
-
+            <label className="flex items-start gap-3 cursor-pointer mb-6">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={e => setTermsAccepted(e.target.checked)}
+                className="w-4 h-4 accent-[#1D9E75] mt-0.5 flex-shrink-0"
+              />
+              <span className="text-xs text-gray-600">
+                I have read and agree to the Terms of Service and confirm that all information I have provided is accurate.
+              </span>
+            </label>
+             </div>
         <p className="text-center text-xs text-gray-400 mt-6">
           Your data is protected under Canadian privacy law (PIPEDA)
         </p>
