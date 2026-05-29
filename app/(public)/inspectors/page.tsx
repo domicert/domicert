@@ -5,7 +5,15 @@ import InspectorGrid from './InspectorGrid'
 
 export const revalidate = 0
 export const dynamic = 'force-dynamic'
-
+export const metadata = {
+  title: 'Find a Home Inspector | Domicert',
+  description: 'Search verified home inspectors across Canada and the United States. View credentials, badges, and reviews. Certified · Lasting · Trusted.',
+  openGraph: {
+    title: 'Find a Home Inspector | Domicert',
+    description: 'Search verified home inspectors across Canada and the United States.',
+    url: 'https://domicert.ca/inspectors',
+  },
+}
 export default async function InspectorDirectoryPage() {
   const supabase = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

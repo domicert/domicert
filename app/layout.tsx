@@ -15,7 +15,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Domicert — Certified · Lasting · Trusted",
-  description: "Professional home inspections, beautifully recorded.",
+  description: "Professional home inspection reports for inspectors across North America. Generate branded PDF reports, deliver to clients, and build your permanent property database.",
+  openGraph: {
+    title: "Domicert — Certified · Lasting · Trusted",
+    description: "Professional home inspection reports for inspectors across North America.",
+    url: "https://domicert.ca",
+  },
 };
 
 export default function RootLayout({
