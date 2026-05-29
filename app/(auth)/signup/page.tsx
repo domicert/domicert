@@ -668,7 +668,31 @@ export default function SignupPage() {
                 I have read and agree to the Terms of Service and confirm that all information I have provided is accurate.
               </span>
             </label>
-             </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(3)}
+                className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => {
+                  if (!termsAccepted) {
+                    setError('Please accept the terms of service to continue')
+                    return
+                  }
+                  handleSubmit()
+                }}
+                disabled={loading}
+                className="flex-1 py-2.5 bg-[#1D9E75] text-white rounded-lg text-sm font-medium hover:bg-[#0F6E56] transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Creating account...' : 'Create account →'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <p className="text-center text-xs text-gray-400 mt-6">
           Your data is protected under Canadian privacy law (PIPEDA)
         </p>
