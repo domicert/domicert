@@ -10,7 +10,7 @@ type AccountType = 'inspector' | 'realtor' | null
 
 export default function SignupPage() {
   const [step, setStep] = useState(1)
-  const [accountType, setAccountType] = useState<AccountType>(null)
+  const [accountType, setAccountType] = useState('inspector')
   const [loading, setLoading] = useState(false)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -304,7 +304,7 @@ export default function SignupPage() {
             </div>
             <button
               onClick={() => {
-                if (!accountType) { setError('Please select an account type'); return }
+                
                 if (!formData.firstName || !formData.email || !formData.password) { setError('Please fill in all required fields'); return }
                 setError(null)
                 setStep(2)
