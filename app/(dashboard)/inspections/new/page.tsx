@@ -365,7 +365,8 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
       libraries: ['places'],
     })
 
-    loader.load().then((google: typeof import('google.maps')) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    loader.load().then((google: any) => {
       const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current!, {
         types: ['address'],
         componentRestrictions: { country: ['ca', 'us'] },
