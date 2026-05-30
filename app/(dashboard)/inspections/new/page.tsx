@@ -359,47 +359,64 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
   // Google Places autocomplete
   useEffect(() => {
     if (!addressInputRef.current) return
-    
-    const loader = new (require('@googlemaps/js-api-loader').Loader)({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY!,
-      libraries: ['places'],
-    })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    loader.load().then((google: any) => {
-      const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current!, {
-        types: ['address'],
-        componentRestrictions: { country: ['ca', 'us'] },
-      })
+    const initAutocomplete = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { setOptions, importLibrary } = (window as any).google?.maps || {}
+        
+        await (window as any).google?.maps?.importLibrary?.('places')
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { Autocomplete } = await (window as any).google.maps.importLibrary('places') as any
 
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace()
-        if (!place.address_components) return
+        const autocomplete = new Autocomplete(addressInputRef.current!, {
+          types: ['address'],
+          componentRestrictions: { country: ['ca', 'us'] },
+        })
 
-        let streetNumber = ''
-        let streetName = ''
-        let city = ''
-        let provinceState = ''
-        let postalZip = ''
-        let country = 'CA'
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace()
+          if (!place.address_components) return
 
-        for (const component of place.address_components) {
-          const type = component.types[0]
-          if (type === 'street_number') streetNumber = component.long_name
-          if (type === 'route') streetName = component.long_name
-          if (type === 'locality') city = component.long_name
-          if (type === 'administrative_area_level_1') provinceState = component.short_name
-          if (type === 'postal_code') postalZip = component.long_name
-          if (type === 'country') country = component.short_name
-        }
+          let streetNumber = ''
+          let streetName = ''
+          let city = ''
+          let provinceState = ''
+          let postalZip = ''
+          let country = 'CA'
 
-        updateProp('address', `${streetNumber} ${streetName}`.trim())
-        updateProp('city', city)
-        updateProp('provinceState', provinceState)
-        updateProp('postalZip', postalZip)
-        updateProp('country', country)
-      })
-    })
+          for (const component of place.address_components) {
+            const type = component.types[0]
+            if (type === 'street_number') streetNumber = component.long_name
+            if (type === 'route') streetName = component.long_name
+            if (type === 'locality') city = component.long_name
+            if (type === 'administrative_area_level_1') provinceState = component.short_name
+            if (type === 'postal_code') postalZip = component.long_name
+            if (type === 'country') country = component.short_name
+          }
+
+          updateProp('address', `${streetNumber} ${streetName}`.trim())
+          updateProp('city', city)
+          updateProp('provinceState', provinceState)
+          updateProp('postalZip', postalZip)
+          updateProp('country', country)
+        })
+      } catch (err) {
+        console.error('Places autocomplete error:', err)
+      }
+    }
+
+    // Load Google Maps script first
+    if (!(window as any).google?.maps) {
+      const script = document.createElement('script')
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY}&libraries=places`
+      script.async = true
+      script.onload = initAutocomplete
+      document.head.appendChild(script)
+    } else {
+      initAutocomplete()
+    }
   }, [])
 
   // Restore draft on page load
