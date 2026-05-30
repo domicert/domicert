@@ -354,7 +354,52 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
       sections,
     }
     localStorage.setItem('domicert_inspection_draft', JSON.stringify(draft))
-  }, [step, selectedTier, property, config, sections])
+}, [step, selectedTier, property, config, sections])
+
+  // Google Places autocomplete
+  useEffect(() => {
+    if (!addressInputRef.current) return
+    
+    const loader = new (require('@googlemaps/js-api-loader').Loader)({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACES_KEY!,
+      libraries: ['places'],
+    })
+
+    loader.load().then((google: typeof import('google.maps')) => {
+      const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current!, {
+        types: ['address'],
+        componentRestrictions: { country: ['ca', 'us'] },
+      })
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace()
+        if (!place.address_components) return
+
+        let streetNumber = ''
+        let streetName = ''
+        let city = ''
+        let provinceState = ''
+        let postalZip = ''
+        let country = 'CA'
+
+        for (const component of place.address_components) {
+          const type = component.types[0]
+          if (type === 'street_number') streetNumber = component.long_name
+          if (type === 'route') streetName = component.long_name
+          if (type === 'locality') city = component.long_name
+          if (type === 'administrative_area_level_1') provinceState = component.short_name
+          if (type === 'postal_code') postalZip = component.long_name
+          if (type === 'country') country = component.short_name
+        }
+
+        updateProp('address', `${streetNumber} ${streetName}`.trim())
+        updateProp('city', city)
+        updateProp('provinceState', provinceState)
+        updateProp('postalZip', postalZip)
+        updateProp('country', country)
+      })
+    })
+  }, [])
 
   // Restore draft on page load
   useEffect(() => {
