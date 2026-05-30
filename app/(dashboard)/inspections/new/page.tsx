@@ -639,6 +639,7 @@ const [draftRestored, setDraftRestored] = useState(false)
               <div className="mb-3">
                 <label className="block text-xs text-gray-500 mb-1">Street address</label>
                 <input
+                  ref={addressInputRef}
                   type="text"
                   value={property.address}
                   onChange={e => updateProp('address', e.target.value)}
