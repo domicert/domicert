@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -340,7 +340,8 @@ const [sectionPhotos, setSectionPhotos] = useState<Record<string, {file: File, p
   const [submitted, setSubmitted] = useState(false)
   const [webLink, setWebLink] = useState<string | null>(null)
   const [emailConfirmed, setEmailConfirmed] = useState(false)
-const [draftRestored, setDraftRestored] = useState(false)
+  const addressInputRef = useRef<HTMLInputElement>(null)
+  const [draftRestored, setDraftRestored] = useState(false)
 
   // Auto-save draft to localStorage
   useEffect(() => {
